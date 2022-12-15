@@ -4,6 +4,7 @@
 [Keith Venables]
 
 - Bug in check align status: Issue #31
+- eFinder does not handle negative declination values #27
 
 ## Version 16_3
 [Keith Venables]
