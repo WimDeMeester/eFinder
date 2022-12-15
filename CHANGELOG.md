@@ -1,7 +1,13 @@
 # Changelog for eFinder software
 
+## Version 16_3_1
+[Keith Venables]
+
+- Bug in check align status: Issue #31
+
 ## Version 16_3
 [Keith Venables]
+
 - Resolved problem with Nexus DSC not returning its own GoTo target coordinates (using LX200 protocol). New Nexus firmware released on 17th Nov 2022
 - Cleaned up GUI panel, removing redundant check boxes (finder focallength and goto source). Moved graticule checkbox to same sub-panel other display options.
 - Added new test images (test.jpg & polaris.jpg) that match the 50mm default focal length. Removed all code references to choice of 200mm lens.
@@ -10,6 +16,7 @@
 
 ## Version 16
 [Keith Venables]
+
 - Added ability for user to adjust OLED brightness on the handpad. (main.py)
 - Fixed a bug where the RA & Dec wasnt being tagged to the saved image file name.
 	Nexus.py
