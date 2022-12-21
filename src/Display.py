@@ -1,9 +1,10 @@
 import serial
 import sys
 import select
-import click
 from enum import Enum
 import logging
+from typing import Dict
+from curtsies import Input
 
 
 class DisplayButtons(Enum):
@@ -73,37 +74,53 @@ class SerialOutput(Output):
 
 class PrintOutput(Output):
     nr_chars = 20
+    mapping: Dict = dict()
 
-    def __init__(self) -> None:
-        self.header, header_dashes = self._create_headings(self.nr_chars, 'Handpad start')
-        self.footer, _ = self._create_headings(self.nr_chars, 'Handpad stop', header_dashes)
+    def __init__(self, mapping_mode='arrows') -> None:
+        self.header, header_dashes = self._create_headings(
+            self.nr_chars, 'Handpad start')
+        self.footer, _ = self._create_headings(
+            self.nr_chars, 'Handpad stop', header_dashes)
+        self._create_mapping(mapping_mode)
 
-    def _create_headings(self, nr_chars, text, header_dashes = None):
-        dashes = int((nr_chars-len(text))/2) if header_dashes is None else header_dashes
+    def _create_headings(self, nr_chars, text, header_dashes=None):
+        dashes = int((nr_chars-len(text)) /
+                     2) if header_dashes is None else header_dashes
         return f"{dashes*'-'}{text}{(nr_chars-dashes-len(text))*'-'}\n", dashes
 
     def display(self, line0: str, line1: str, line2: str) -> None:
-        # no logging here because multiline logging is ugly 
+        # no logging here because multiline logging is ugly
         print(f"{self.header}{line0}\n{line1}\n{line2}\n{self.footer}")
 
     def get_button_press(self):
-        c = click.getchar()
-        button = self.translator(c)
-        return button
-
-    def translator(self, char):
-        mapping = {'a': DisplayButtons.BTN_LEFT,
-                   'e': DisplayButtons.BTN_RIGHT,
-                   ',': DisplayButtons.BTN_UP,
-                   'o': DisplayButtons.BTN_DOWN,
-                   "'": DisplayButtons.BTN_SELECT,
-                   '.': DisplayButtons.BTN_LONGSELECT}
-        if char in mapping:
-            logging.debug(f"button pressed: {char}, {mapping[char]=}")
-            return mapping[char]
+        with Input(keynames='curses') as input_generator:
+            res = input_generator.send(None)
+        if res in self.mapping:
+            return self.mapping[res]
         else:
-            logging.debug(f"Unrecognized button pressed: {char}")
+            logging.debug(f"Unrecognized button pressed: '{res}'")
         return None
+
+    def _create_mapping(self, mapping_mode):
+        if mapping_mode == 'arrows':
+            self.mapping = {
+                'KEY_LEFT': DisplayButtons.BTN_LEFT,
+                'KEY_RIGHT': DisplayButtons.BTN_RIGHT,
+                'KEY_UP': DisplayButtons.BTN_UP,
+                'KEY_DOWN': DisplayButtons.BTN_DOWN,
+                ' ': DisplayButtons.BTN_SELECT,
+                '\n': DisplayButtons.BTN_LONGSELECT}
+            logging.info(
+                "Navigate the handpad using arrow keys, space (select) and enter (long press select)")
+        elif mapping_mode == 'dvorak':
+            self.mapping = {'a': DisplayButtons.BTN_LEFT,
+                            'e': DisplayButtons.BTN_RIGHT,
+                            ',': DisplayButtons.BTN_UP,
+                            'o': DisplayButtons.BTN_DOWN,
+                            "'": DisplayButtons.BTN_SELECT,
+                            '.': DisplayButtons.BTN_LONGSELECT}
+            logging.info(
+                "Navigate the handpad using a (left), e (right), ',' (up), o (down), ' (select), . (long press select)")
 
 
 class Display(Output):
