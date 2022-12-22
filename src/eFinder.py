@@ -20,6 +20,7 @@ from PIL import Image
 import psutil
 import threading
 import select
+from gui import EFinderGUI
 import utils
 import logging
 import argparse
@@ -346,6 +347,10 @@ def main(cli_data: CLIData):
 
     eFinder = EFinder(handpad, common, coordinates, camera_data, cli_data,
                       astro_data, offset_data, param)
+    if cli_data.has_gui:
+        gui = EFinderGUI(nexus, param, camera_data, cli_data, astro_data,
+                         offset_data, common, coordinates)
+        gui.start_loop()
 
     while True:  # next loop looks for button press and sets display option x,y
         time.sleep(0.1)
