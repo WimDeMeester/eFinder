@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import Label, Radiobutton, StringVar, Checkbutton, Button, Frame
 from PIL import Image, ImageTk, ImageDraw, ImageOps
 from pathlib import Path
-from common import CameraSettings, CLIOptions
+from common import CameraSettings, CLIData
 
 
 class EFinderGUI():
@@ -18,20 +18,21 @@ class EFinderGUI():
     window = tk.Tk()
     box_list = ["", "", "", "", "", ""]
 
-    def __init__(self, nexus, param, camera_settings: CameraSettings, cli_options: CLIOptions):
+    def __init__(self, nexus, param, camera_settings: CameraSettings,
+                 cli_data: CLIData):
         self.nexus = nexus
         self.param = param
         self.camera_settings = camera_settings
-        self.cli_options = cli_options
+        self.cli_data = cli_data
         self.cwd_path: Path = Path.cwd()
 
     def start_loop(self):
         # main program loop, using tkinter GUI
-        window.title("ScopeDog eFinder v" + version)
-        window.geometry("1300x1000+100+10")
-        window.configure(bg="black")
-        window.bind("<<OLED_Button>>", do_button)
-        eFinderGUI.setup_sidereal()
+        self.window.title("ScopeDog eFinder v" + version)
+        self.window.geometry("1300x1000+100+10")
+        self.window.configure(bg="black")
+        self.window.bind("<<OLED_Button>>", do_button)
+        self.setup_sidereal()
 
         sid = threading.Thread(target=eFinderGUI.sidereal)
         sid.daemon = True
@@ -132,6 +133,71 @@ class EFinderGUI():
     def solve_elapsed_time(self, elapsed_time_str):
         tk.Label(self.window, text=elapsed_time_str, width=20, anchor="e", bg=self.b_g, fg=self.f_g).place(
             x=315, y=936)
+
+    def image_show(self):
+        global manual_angle, img3, EPlength, scopeAlt
+        img2 = Image.open(images_path / "capture.jpg")
+        width, height = img2.size
+        # original is 1280 x 960
+        img2 = img2.resize((1014, 760), Resampling.LANCZOS)
+        width, height = img2.size
+        h = pix_scale * 960 / 60  # vertical finder field of view in arc min
+        w = pix_scale * 1280 / 60
+        w_offset = width * offset[0] * 60 / w
+        h_offset = height * offset[1] * 60 / h
+        img2 = img2.convert("RGB")
+        if grat.get() == "1":
+            draw = ImageDraw.Draw(img2)
+            draw.line([(width / 2, 0), (width / 2, height)], fill=75, width=2)
+            draw.line([(0, height / 2), (width, height / 2)], fill=75, width=2)
+            draw.line(
+                [(width / 2 + w_offset, 0), (width / 2 + w_offset, height)],
+                fill=255,
+                width=1,
+            )
+            draw.line(
+                [(0, height / 2 - h_offset), (width, height / 2 - h_offset)],
+                fill=255,
+                width=1,
+            )
+        if EP.get() == "1":
+            draw = ImageDraw.Draw(img2)
+            tfov = (
+                (float(EPlength.get()) * height /
+                 float(param["scope_focal_length"]))
+                * 60
+                / h
+            ) / 2  # half tfov in pixels
+            draw.ellipse(
+                [
+                    width / 2 + w_offset - tfov,
+                    height / 2 - h_offset - tfov,
+                    width / 2 + w_offset + tfov,
+                    height / 2 - h_offset + tfov,
+                ],
+                fill=None,
+                outline=255,
+                width=1,
+            )
+        if lock.get() == "1":
+            img2 = zoom_at(img2, w_offset, h_offset, 1)
+        if zoom.get() == "1":
+            img2 = zoom_at(img2, 0, 0, 2)
+        if flip.get() == "1":
+            img2 = ImageOps.flip(img2)
+        if mirror.get() == "1":
+            img2 = ImageOps.mirror(img2)
+        if auto_rotate.get() == "1":
+            img2 = img2.rotate(scopeAlt)
+        elif manual_rotate.get() == "1":
+            angle_deg = angle.get()
+            img2 = img2.rotate(float(angle_deg))
+        img3 = img2
+        img2 = ImageTk.PhotoImage(img2)
+        panel.configure(image=img2)
+        panel.image = img2
+        panel.place(x=200, y=5, width=1014, height=760)
+
 
     # GUI specific
     def setup_sidereal(self):
@@ -252,7 +318,7 @@ class EFinderGUI():
         exp_frame.place(x=0, y=100)
         tk.Label(exp_frame, text="Exposure", bg=b_g,
                  fg=f_g).pack(padx=1, pady=1)
-        expRange = self.cli_options.exp_range
+        expRange = self.cli_data.exp_range
         for i in range(len(expRange)):
             tk.Radiobutton(
                 exp_frame,
@@ -272,7 +338,7 @@ class EFinderGUI():
         gain_frame = Frame(self.window, bg="black")
         gain_frame.place(x=80, y=100)
         tk.Label(gain_frame, text="Gain", bg=b_g, fg=f_g).pack(padx=1, pady=1)
-        gainRange = self.cli_options.gain_range
+        gainRange = self.cli_data.gain_range
         for i in range(len(gainRange)):
             tk.Radiobutton(
                 gain_frame,
