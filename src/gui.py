@@ -8,6 +8,7 @@ import logging
 from Coordinates import Coordinates
 import threading
 import sys
+from efinder_core import EFinder
 
 
 class EFinderGUI():
@@ -23,18 +24,15 @@ class EFinderGUI():
     box_list = ["", "", "", "", "", ""]
     eye_piece = []
 
-    def __init__(self, nexus, param, camera_data: CameraData,
-                 cli_data: CLIData, astro_data: AstroData,
-                 offset_data: OffsetData, common: Common,
-                 coordinates: Coordinates):
-        self.nexus = nexus
-        self.param = param
-        self.camera_data = camera_data
-        self.common = common
-        self.coordinates = coordinates
-        self.cli_data = cli_data
-        self.astro_data: AstroData = astro_data
-        self.offset_data: OffsetData = offset_data
+    def __init__(self, efinder: EFinder):
+        self.efinder = efinder
+        self.param = efinder.param
+        self.camera_data = efinder.camera_data
+        self.common = efinder.common
+        self.coordinates = efinder.coordinates
+        self.cli_data = efinder.cli_data
+        self.astro_data: AstroData = efinder.astro_data
+        self.offset_data: OffsetData = efinder.offset_data
         self.cwd_path: Path = Path.cwd()
 
     def start_loop(self):
@@ -51,7 +49,6 @@ class EFinderGUI():
         sid.start()
         NexStr = self.astro_data.nexus.get_nex_str()
         self.draw_screen(NexStr)
-
 
     def update_nexus_GUI(self):
         """Put the correct nexus numbers on the GUI."""
@@ -147,7 +144,7 @@ class EFinderGUI():
         tk.Label(
             self.window,
             width=10,
-            text=coordinates.hh2dms(solved_radec[0]),
+            text=self.coordinates.hh2dms(solved_radec[0]),
             anchor="e",
             bg=self.b_g,
             fg=self.f_g,
@@ -156,7 +153,7 @@ class EFinderGUI():
             self.window,
             width=10,
             anchor="e",
-            text=coordinates.dd2dms(solved_radec[1]),
+            text=self.coordinates.dd2dms(solved_radec[1]),
             bg=self.b_g,
             fg=self.f_g,
         ).place(x=410, y=826)
@@ -164,7 +161,7 @@ class EFinderGUI():
             self.window,
             width=10,
             anchor="e",
-            text=coordinates.ddd2dms(solved_altaz[1]),
+            text=self.coordinates.ddd2dms(solved_altaz[1]),
             bg=self.b_g,
             fg=self.f_g,
         ).place(x=410, y=870)
@@ -172,17 +169,16 @@ class EFinderGUI():
             self.window,
             width=10,
             anchor="e",
-            text=coordinates.dd2dms(solved_altaz[0]),
+            text=self.coordinates.dd2dms(solved_altaz[0]),
             bg=self.b_g,
             fg=self.f_g,
         ).place(x=410, y=892)
 
     def solve_elapsed_time(self, elapsed_time_str):
-        tk.Label(self.window, text=elapsed_time_str, width=20, anchor="e", bg=self.b_g, fg=self.f_g).place(
-            x=315, y=936)
+        tk.Label(self.window, text=elapsed_time_str, width=20, anchor="e",
+                 bg=self.b_g, fg=self.f_g).place(x=315, y=936)
 
     def image_show(self):
-        # global manual_angle, img3, EPlength, scopeAlt
         img2 = Image.open(self.cli_data.images_path / "capture.jpg")
         width, height = img2.size
         # original is 1280 x 960
@@ -191,8 +187,8 @@ class EFinderGUI():
         # vertical finder field of view in arc min
         h = self.camera_data.pix_scale * 960 / 60
         w = self.camera_data.pix_scale * 1280 / 60
-        w_offset = width * offset[0] * 60 / w
-        h_offset = height * offset[1] * 60 / h
+        w_offset = width * self.offset_data.offset[0] * 60 / w
+        h_offset = height * self.offset_data.offset[1] * 60 / h
         img2 = img2.convert("RGB")
         if self.grat.get() == "1":
             draw = ImageDraw.Draw(img2)
@@ -208,10 +204,10 @@ class EFinderGUI():
                 fill=255,
                 width=1,
             )
-        if EP.get() == "1":
+        if self.EP.get() == "1":
             draw = ImageDraw.Draw(img2)
             tfov = (
-                (float(EPlength.get()) * height /
+                (float(self.EPlength.get()) * height /
                  float(self.param["scope_focal_length"]))
                 * 60
                 / h
@@ -227,24 +223,23 @@ class EFinderGUI():
                 outline=255,
                 width=1,
             )
-        if lock.get() == "1":
+        if self.lock.get() == "1":
             img2 = zoom_at(img2, w_offset, h_offset, 1)
-        if zoom.get() == "1":
+        if self.zoom.get() == "1":
             img2 = zoom_at(img2, 0, 0, 2)
-        if flip.get() == "1":
+        if self.flip.get() == "1":
             img2 = ImageOps.flip(img2)
-        if mirror.get() == "1":
+        if self.mirror.get() == "1":
             img2 = ImageOps.mirror(img2)
-        if auto_rotate.get() == "1":
+        if self.auto_rotate.get() == "1":
             img2 = img2.rotate(scopeAlt)
-        elif manual_rotate.get() == "1":
-            angle_deg = angle.get()
+        elif self.manual_rotate.get() == "1":
+            angle_deg = self.angle.get()
             img2 = img2.rotate(float(angle_deg))
-        img3 = img2
         img2 = ImageTk.PhotoImage(img2)
-        panel.configure(image=img2)
-        panel.image = img2
-        panel.place(x=200, y=5, width=1014, height=760)
+        self.panel.configure(image=img2)
+        self.panel.image = img2
+        self.panel.place(x=200, y=5, width=1014, height=760)
 
     # GUI specific
 
@@ -276,7 +271,7 @@ class EFinderGUI():
 
     def sidereal(self):
         t = self.ts.now()
-        self.LST = t.gmst + self.nexus.get_long() / 15  # as decimal hours
+        self.LST = t.gmst + self.astro_data.nexus.get_long() / 15  # as decimal hours
         LSTstr = (
             str(int(self.LST))
             + "h "
@@ -357,9 +352,9 @@ class EFinderGUI():
         img = Image.open(self.cwd_path / "splashscreen.jpeg")
         img = img.resize((1014, 760))
         img = ImageTk.PhotoImage(img)
-        panel = tk.Label(self.window, highlightbackground="red",
+        self.panel = tk.Label(self.window, highlightbackground="red",
                          highlightthickness=2, image=img)
-        panel.place(x=200, y=5, width=1014, height=760)
+        self.panel.place(x=200, y=5, width=1014, height=760)
 
         self.exposure_str: StringVar = StringVar()
         self.exposure_str.set(str(self.camera_data.exposure))
@@ -614,8 +609,8 @@ class EFinderGUI():
             width=8,
             command=self.image_show,
         ).pack(padx=1, pady=1)
-        grat = StringVar()
-        grat.set("0")
+        self.grat = StringVar()
+        self.grat.set("0")
         tk.Checkbutton(
             dis_frame,
             text="graticule",
@@ -625,10 +620,10 @@ class EFinderGUI():
             activebackground="red",
             bg=b_g,
             fg=f_g,
-            variable=grat,
+            variable=self.grat,
         ).pack(padx=1, pady=1)
-        lock = StringVar()
-        lock.set("0")
+        self.lock = StringVar()
+        self.lock.set("0")
         tk.Checkbutton(
             dis_frame,
             text="Scope centre",
@@ -639,10 +634,10 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=10,
-            variable=lock,
+            variable=self.lock,
         ).pack(padx=1, pady=1)
-        zoom = StringVar()
-        zoom.set("0")
+        self.zoom = StringVar()
+        self.zoom.set("0")
         tk.Checkbutton(
             dis_frame,
             text="zoom x2",
@@ -653,10 +648,10 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=10,
-            variable=zoom,
+            variable=self.zoom,
         ).pack(padx=1, pady=1)
-        flip = StringVar()
-        flip.set("0")
+        self.flip = StringVar()
+        self.flip.set("0")
         tk.Checkbutton(
             dis_frame,
             text="flip",
@@ -667,10 +662,10 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=10,
-            variable=flip,
+            variable=self.flip,
         ).pack(padx=1, pady=1)
-        mirror = StringVar()
-        mirror.set("0")
+        self.mirror = StringVar()
+        self.mirror.set("0")
         tk.Checkbutton(
             dis_frame,
             text="mirror",
@@ -681,10 +676,10 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=10,
-            variable=mirror,
+            variable=self.mirror,
         ).pack(padx=1, pady=1)
-        auto_rotate = StringVar()
-        auto_rotate.set("0")
+        self.auto_rotate = StringVar()
+        self.auto_rotate.set("0")
         tk.Checkbutton(
             dis_frame,
             text="auto-rotate",
@@ -695,10 +690,10 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=10,
-            variable=auto_rotate,
+            variable=self.auto_rotate,
         ).pack(padx=1, pady=1)
-        manual_rotate = StringVar()
-        manual_rotate.set("1")
+        self.manual_rotate = StringVar()
+        self.manual_rotate.set("1")
         tk.Checkbutton(
             dis_frame,
             text="rotate angle",
@@ -709,13 +704,13 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=10,
-            variable=manual_rotate,
+            variable=self.manual_rotate,
         ).pack(padx=1, pady=1)
-        angle = StringVar()
-        angle.set("0")
+        self.angle = StringVar()
+        self.angle.set("0")
         tk.Entry(
             dis_frame,
-            textvariable=angle,
+            textvariable=self.angle,
             bg="red",
             fg=b_g,
             highlightbackground="red",
@@ -723,10 +718,10 @@ class EFinderGUI():
             width=5,
         ).pack(padx=10, pady=1)
 
-        ann_frame = Frame(self.window, bg="black")
-        ann_frame.place(x=950, y=765)
+        self.ann_frame = Frame(self.window, bg="black")
+        self.ann_frame.place(x=950, y=765)
         tk.Button(
-            ann_frame,
+            self.ann_frame,
             text="Annotate",
             bg=b_g,
             fg=f_g,
@@ -737,10 +732,10 @@ class EFinderGUI():
             width=6,
             command=self.annotate_image,
         ).pack(padx=1, pady=1)
-        bright = StringVar()
-        bright.set("0")
+        self.bright = StringVar()
+        self.bright.set("0")
         tk.Checkbutton(
-            ann_frame,
+            self.ann_frame,
             text="Bright",
             bg=b_g,
             fg=f_g,
@@ -749,12 +744,12 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=8,
-            variable=bright,
+            variable=self.bright,
         ).pack(padx=1, pady=1)
-        hip = StringVar()
-        hip.set("0")
+        self.hip = StringVar()
+        self.hip.set("0")
         tk.Checkbutton(
-            ann_frame,
+            self.ann_frame,
             text="Hip",
             bg=b_g,
             fg=f_g,
@@ -763,12 +758,12 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=8,
-            variable=hip,
+            variable=self.hip,
         ).pack(padx=1, pady=1)
-        hd = StringVar()
-        hd.set("0")
+        self.hd = StringVar()
+        self.hd.set("0")
         tk.Checkbutton(
-            ann_frame,
+            self.ann_frame,
             text="H-D",
             bg=b_g,
             fg=f_g,
@@ -777,12 +772,12 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=8,
-            variable=hd,
+            variable=self.hd,
         ).pack(padx=1, pady=1)
-        ngc = StringVar()
-        ngc.set("0")
+        self.ngc = StringVar()
+        self.ngc.set("0")
         tk.Checkbutton(
-            ann_frame,
+            self.ann_frame,
             text="ngc/ic",
             bg=b_g,
             fg=f_g,
@@ -791,12 +786,12 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=8,
-            variable=ngc,
+            variable=self.ngc,
         ).pack(padx=1, pady=1)
-        abell = StringVar()
-        abell.set("0")
+        self.abell = StringVar()
+        self.abell.set("0")
         tk.Checkbutton(
-            ann_frame,
+            self.ann_frame,
             text="Abell",
             bg=b_g,
             fg=f_g,
@@ -805,12 +800,12 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=8,
-            variable=abell,
+            variable=self.abell,
         ).pack(padx=1, pady=1)
-        tycho2 = StringVar()
-        tycho2.set("0")
+        self.tycho2 = StringVar()
+        self.tycho2.set("0")
         tk.Checkbutton(
-            ann_frame,
+            self.ann_frame,
             text="Tycho2",
             bg=b_g,
             fg=f_g,
@@ -819,7 +814,7 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=8,
-            variable=tycho2,
+            variable=self.tycho2,
         ).pack(padx=1, pady=1)
 
         tk.Label(self.window, text="RA", bg=b_g, fg=f_g).place(x=200, y=804)
@@ -827,8 +822,8 @@ class EFinderGUI():
         tk.Label(self.window, text="Az", bg=b_g, fg=f_g).place(x=200, y=870)
         tk.Label(self.window, text="Alt", bg=b_g, fg=f_g).place(x=200, y=892)
 
-        EP = StringVar()
-        EP.set("0")
+        self.EP = StringVar()
+        self.EP.set("0")
         EP_frame = Frame(self.window, bg="black")
         EP_frame.place(x=1060, y=770)
         rad13 = Checkbutton(
@@ -841,15 +836,14 @@ class EFinderGUI():
             highlightbackground="black",
             bd=0,
             width=20,
-            variable=EP,
+            variable=self.EP,
         ).pack(padx=1, pady=2)
-        global EPlength
-        EPlength = StringVar()
-        EPlength.set(float(self.param["default_eyepiece"]))
+        self.EPlength = StringVar()
+        self.EPlength.set(float(self.param["default_eyepiece"]))
         for i in range(len(self.eye_piece)):
             tk.Radiobutton(
                 EP_frame,
-                text=eye_piece[i][0],
+                text=self.eye_piece[i][0],
                 bg=b_g,
                 fg=f_g,
                 activebackground="red",
@@ -858,7 +852,7 @@ class EFinderGUI():
                 bd=0,
                 width=20,
                 value=self.eye_piece[i][1] * self.eye_piece[i][2],
-                variable=EPlength,
+                variable=self.EPlength,
             ).pack(padx=1, pady=0)
         self.get_offset()
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -875,9 +869,12 @@ class EFinderGUI():
 
     def read_nexus_and_capture(self):
         logging.debug("TODO read_nexus_and_capture")
+        self.efinder.capture()
+        self.image_show()
 
     def solve(self):
         logging.debug("TODO solve")
+        self.efinder.solveImage()
 
     def goto(self):
         logging.debug("TODO goto")
