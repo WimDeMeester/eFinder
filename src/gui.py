@@ -46,12 +46,12 @@ class EFinderGUI():
         self.setup_sidereal()
         # self.sidereal()
         # self.update_nexus_GUI()
+        sid = threading.Thread(target=self.sidereal)
+        sid.daemon = True
+        sid.start()
         NexStr = self.astro_data.nexus.get_nex_str()
         self.draw_screen(NexStr)
 
-        # sid = threading.Thread(target=self.sidereal)
-        # sid.daemon = True
-        # sid.start()
 
     def update_nexus_GUI(self):
         """Put the correct nexus numbers on the GUI."""
@@ -275,7 +275,6 @@ class EFinderGUI():
     # GUI specific
 
     def sidereal(self):
-        logging.debug("sidereal")
         t = self.ts.now()
         self.LST = t.gmst + self.nexus.get_long() / 15  # as decimal hours
         LSTstr = (
@@ -327,7 +326,7 @@ class EFinderGUI():
         offset = offset_new
         x_offset_new, y_offset_new, dxstr, dystr = self.common.dxdy2pixel(
             offset[0], offset[1])
-        tk.Label(window, text=dxstr + "," + dystr, bg=b_g, fg=f_g, width=8).place(
+        tk.Label(self.window, text=dxstr + "," + dystr, bg=b_g, fg=f_g, width=8).place(
             x=60, y=400
         )
 
@@ -335,7 +334,7 @@ class EFinderGUI():
         global offset
         offset = offset_reset
         eFinderGUI.box_write("offset reset", True)
-        tk.Label(window, text="0,0", bg=b_g,
+        tk.Label(self.window, text="0,0", bg=b_g,
                  fg="red", width=8).place(x=60, y=400)
 ###########################################
 
@@ -868,7 +867,7 @@ class EFinderGUI():
     def on_closing(self):
         # TODO found out how to save params again
         # self.save_param()
-        self.handpad.display("Program closed", "via VNCGUI", "")
+        # self.handpad.display("Program closed", "via VNCGUI", "")
         sys.exit()
 
     def align(self):
@@ -896,7 +895,6 @@ class EFinderGUI():
         logging.debug("TODO annotate_image")
 
     def box_write(self, new_line, show_handpad):
-        global handpad
         t = self.ts.now()
         for i in range(5, 0, -1):
             self.box_list[i] = self.box_list[i - 1]
