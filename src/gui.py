@@ -9,6 +9,9 @@ from Coordinates import Coordinates
 import threading
 import sys
 from efinder_core import EFinder
+from Nexus import Nexus
+import re
+import time
 
 
 class EFinderGUI():
@@ -32,6 +35,7 @@ class EFinderGUI():
         self.coordinates = efinder.coordinates
         self.cli_data = efinder.cli_data
         self.astro_data: AstroData = efinder.astro_data
+        self.nexus: Nexus = self.astro_data.nexus
         self.offset_data: OffsetData = efinder.offset_data
         self.cwd_path: Path = Path.cwd()
 
@@ -47,15 +51,15 @@ class EFinderGUI():
         sid = threading.Thread(target=self.sidereal)
         sid.daemon = True
         sid.start()
-        NexStr = self.astro_data.nexus.get_nex_str()
+        NexStr = self.nexus.get_nex_str()
         self.draw_screen(NexStr)
 
     def update_nexus_GUI(self):
         """Put the correct nexus numbers on the GUI."""
         logging.debug("update_nexus_GUI")
-        self.astro_data.nexus.read_altAz()
-        nexus_radec = self.astro_data.nexus.get_radec()
-        nexus_altaz = self.astro_data.nexus.get_altAz()
+        self.nexus.read_altAz()
+        nexus_radec = self.nexus.get_radec()
+        nexus_altaz = self.nexus.get_altAz()
         tk.Label(
             self.window,
             width=10,
@@ -224,9 +228,9 @@ class EFinderGUI():
                 width=1,
             )
         if self.lock.get() == "1":
-            img2 = zoom_at(img2, w_offset, h_offset, 1)
+            img2 = self.zoom_at(img2, w_offset, h_offset, 1)
         if self.zoom.get() == "1":
-            img2 = zoom_at(img2, 0, 0, 2)
+            img2 = self.zoom_at(img2, 0, 0, 2)
         if self.flip.get() == "1":
             img2 = ImageOps.flip(img2)
         if self.mirror.get() == "1":
@@ -249,7 +253,7 @@ class EFinderGUI():
         b_g = self.b_g
         f_g = self.f_g
         t = self.ts.now()
-        self.LST = t.gmst + self.astro_data.nexus.get_long() / 15  # as decimal hours
+        self.LST = t.gmst + self.nexus.get_long() / 15  # as decimal hours
         LSTstr = (
             str(int(self.LST))
             + "h "
@@ -271,7 +275,7 @@ class EFinderGUI():
 
     def sidereal(self):
         t = self.ts.now()
-        self.LST = t.gmst + self.astro_data.nexus.get_long() / 15  # as decimal hours
+        self.LST = t.gmst + self.nexus.get_long() / 15  # as decimal hours
         LSTstr = (
             str(int(self.LST))
             + "h "
@@ -344,8 +348,8 @@ class EFinderGUI():
             self.window,
             width=18,
             anchor="w",
-            text=str(self.astro_data.nexus.get_long()) + "\u00b0  " +
-            str(self.astro_data.nexus.get_lat()) + "\u00b0",
+            text=str(self.nexus.get_long()) + "\u00b0  " +
+            str(self.nexus.get_lat()) + "\u00b0",
             bg=b_g,
             fg=f_g,
         ).place(x=55, y=66)
@@ -864,6 +868,13 @@ class EFinderGUI():
         # self.handpad.display("Program closed", "via VNCGUI", "")
         sys.exit()
 
+    def zoom_at(self, img, x, y, zoom):
+        w, h = img.size
+        dh = (h - (h / zoom)) / 2
+        dw = (w - (w / zoom)) / 2
+        img = img.crop((dw + x, dh - y, w - dw + x, h - dh - y))
+        return img.resize((w, h), Image.LANCZOS)
+
     def align(self):
         logging.debug("TODO align")
 
@@ -879,8 +890,70 @@ class EFinderGUI():
     def goto(self):
         logging.debug("TODO goto")
 
+    # UI only method
     def move(self):
-        logging.debug("TODO move")
+        self.efinder.solveImage()
+        self.image_show()
+        if self.astro_data.solved:
+            self.box_write("no solution yet", True)
+            return
+        goto_ra = self.nexus.get(":Gr#").split(":")
+        goto_dec = re.split(r"[:*]", self.nexus.get(":Gd#"))
+        # not a valid goto target set yet.
+        if goto_ra[0] == "00" and goto_ra[1] == "00":
+            self.box_write("no GoTo target", True)
+            return
+        logging.info("%s %s %s" % ("goto RA & Dec", goto_ra, goto_dec))
+        ra = float(goto_ra[0]) + float(goto_ra[1]) / 60 + float(goto_ra[2]) / 3600
+        dec = float(goto_dec[0]) + float(goto_dec[1]) / \
+            60 + float(goto_dec[2]) / 3600
+        logging.info("%s %s %s" % ("lgoto radec", ra, dec))
+        alt_g, az_g = self.coordinates.conv_altaz(
+            self.nexus.get_long, self.nexus.get_lat, ra, dec)
+        logging.info("%s %s %s" % ("target Az Alt", az_g, alt_g))
+        delta_Az = (az_g - self.astro_data.solved_altaz[1]) * 60  # +ve move scope right
+        delta_Alt = (alt_g - self.astro_data.solved_altaz[0]) * 60  # +ve move scope up
+        delta_Az_str = "{: .2f}".format(delta_Az)
+        delta_Alt_str = "{: .2f}".format(delta_Alt)
+        logging.info(f"deltaAz: {delta_Az_str}, deltaAlt: {delta_Alt_str}")
+        self.box_write(f"deltaAz : {delta_Az_str}", True)
+        self.box_write(f"deltaAlt: {delta_Alt_str}", True)
+        self.moveScope(delta_Az, delta_Alt)
+        # could insert a new capture and solve?
+
+    def moveScope(self, dAz, dAlt):
+        azPulse = abs(dAz / float(self.param["azSpeed"]))  # seconds
+        altPulse = abs(dAlt / float(self.param["altSpeed"]))
+        logging.debug(
+            "%s %.2f  %s  %.2f %s" % (
+                "azPulse:", azPulse, "altPulse:", altPulse, "seconds")
+        )
+        self.nexus.write("#:RG#")  # set move speed to guide
+        self.box_write("moving scope in Az", True)
+        logging.info("moving scope in Az")
+        if dAz > 0:  # if +ve move scope left
+            self.nexus.write("#:Me#")
+            time.sleep(azPulse)
+            self.nexus.write("#:Q#")
+        else:
+            self.nexus.write("#:Mw#")
+            time.sleep(azPulse)
+            self.nexus.write("#:Q#")
+        time.sleep(0.2)
+        self.box_write("moving scope in Alt", True)
+        logging.info("moving scope in Alt")
+        self.nexus.write("#:RG#")
+        if dAlt > 0:  # if +ve move scope down
+            self.nexus.write("#:Ms#")
+            time.sleep(altPulse)
+            self.nexus.write("#:Q#")
+        else:
+            self.nexus.write("#:Mn#")
+            time.sleep(altPulse)
+            self.nexus.write("#:Q#")
+        self.box_write("move finished", True)
+        logging.info("move finished")
+        time.sleep(1)
 
     def measure_offset(self):
         logging.debug("TODO measure_offset")

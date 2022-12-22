@@ -271,12 +271,6 @@ def annotate_image():
         return
 
 
-def zoom_at(img, x, y, zoom):
-    w, h = img.size
-    dh = (h - (h / zoom)) / 2
-    dw = (w - (w / zoom)) / 2
-    img = img.crop((dw + x, dh - y, w - dw + x, h - dh - y))
-    return img.resize((w, h), Image.LANCZOS)
 
 
 def moveScope(dAz, dAlt):
