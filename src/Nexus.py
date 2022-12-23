@@ -39,9 +39,7 @@ class Nexus:
             self.ser.write(b":P#")
             time.sleep(0.1)
             logging.info(
-                "Connected to Nexus in",
-                str(self.ser.read(self.ser.in_waiting), "ascii"),
-                "via USB",
+                f"Connected to Nexus in{str(self.ser.read(self.ser.in_waiting)} ascii via USB"
             )
             self.NexStr = "connected"
             self.display.display("Found Nexus", "via USB", "")
@@ -61,7 +59,7 @@ class Nexus:
                         s.send(b":U#")
                     s.send(b":P#")
                     time.sleep(0.1)
-                    logging.info("Connected to Nexus in", str(s.recv(15), "ascii"), "via wifi")
+                    logging.info(f"Connected to Nexus in {str(s.recv(15)} ascii via wifi")
                     self.NexStr = "connected"
                     self.display.display("Found Nexus", "via WiFi", "")
                     time.sleep(1)
@@ -83,7 +81,7 @@ class Nexus:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((self.HOST, self.PORT))
                 s.send(bytes(txt.encode("ascii")))
-        logging.info("sent", txt, "to Nexus")
+        logging.info(f"sent {txt} to Nexus")
 
     def get(self, txt: str) -> str:
         """Receive a message from the Nexus DSC
@@ -104,7 +102,7 @@ class Nexus:
                 s.send(bytes(txt.encode("ascii")))
                 time.sleep(0.1)
                 res = str(s.recv(16).decode("ascii")).strip("#")
-        logging.info("sent", txt, "got", res, "from Nexus")
+        logging.info(f"sent {txt} got {res} from Nexus")
         return res
 
     def read(self) -> None:
@@ -117,12 +115,8 @@ class Nexus:
         local_time = self.get(":GL#")
         local_date = self.get(":GC#")
         local_offset = float(self.get(":GG#"))
-        logging.info(
-            "Nexus reports: local datetime as",
-            local_date,
-            local_time,
-            " local offset:",
-            local_offset,
+        logging.info(f
+            "Nexus reports: local datetime as {local_date=}, {local_time=}, {loca_offset=}"
         )
         date_parts = local_date.split("/")
         local_date = date_parts[0] + "/" + date_parts[1] + "/20" + date_parts[2]
@@ -130,8 +124,8 @@ class Nexus:
         format = "%m/%d/%Y %H:%M:%S"
         local_dt = datetime.strptime(dt_str, format)
         new_dt = local_dt + timedelta(hours=local_offset)
-        logging.info("Calculated UTC", new_dt)
-        logging.info("setting pi clock to:", end=" ")
+        logging.info(f"Calculated UTC {new_dt}")
+        print("setting pi clock to:", end=" ")
         os.system('sudo date -u --set "%s"' % new_dt + ".000Z")
         p = self.get(":GW#")
         if p != "AT2#":

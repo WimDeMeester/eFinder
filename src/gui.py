@@ -237,7 +237,7 @@ class EFinderGUI():
         if self.mirror.get() == "1":
             img2 = ImageOps.mirror(img2)
         if self.auto_rotate.get() == "1":
-            img2 = img2.rotate(self.astro_data.scopeAlt)
+            img2 = img2.rotate(self.astro_data.scope_altaz[1])
         elif self.manual_rotate.get() == "1":
             angle_deg = self.angle.get()
             img2 = img2.rotate(float(angle_deg))
