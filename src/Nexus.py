@@ -38,9 +38,7 @@ class Nexus:
                 self.ser.write(b":U#")
             self.ser.write(b":P#")
             time.sleep(0.1)
-            logging.info(
-                f"Connected to Nexus in{str(self.ser.read(self.ser.in_waiting)} ascii via USB"
-            )
+            logging.info(f"Connected to Nexus in {str(self.ser.read(self.ser.in_waiting))} ascii via USB")
             self.NexStr = "connected"
             self.display.display("Found Nexus", "via USB", "")
             time.sleep(1)
@@ -59,7 +57,7 @@ class Nexus:
                         s.send(b":U#")
                     s.send(b":P#")
                     time.sleep(0.1)
-                    logging.info(f"Connected to Nexus in {str(s.recv(15)} ascii via wifi")
+                    logging.info(f"Connected to Nexus in {str(s.recv(15))} ascii via wifi")
                     self.NexStr = "connected"
                     self.display.display("Found Nexus", "via WiFi", "")
                     time.sleep(1)
@@ -115,9 +113,7 @@ class Nexus:
         local_time = self.get(":GL#")
         local_date = self.get(":GC#")
         local_offset = float(self.get(":GG#"))
-        logging.info(f
-            "Nexus reports: local datetime as {local_date=}, {local_time=}, {loca_offset=}"
-        )
+        logging.info(f"Nexus reports: local datetime as {local_date=}, {local_time=}, {local_offset=}")
         date_parts = local_date.split("/")
         local_date = date_parts[0] + "/" + date_parts[1] + "/20" + date_parts[2]
         dt_str = local_date + " " + local_time
