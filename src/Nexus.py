@@ -6,8 +6,9 @@ import os
 import math
 import re
 from Display import Display
-import Coordinates
+from Coordinates import Coordinates
 import logging
+from skyfield.api import wgs84
 
 
 class Nexus:
@@ -154,16 +155,10 @@ class Nexus:
         nexus_dec = self.coordinates.dd2dms(self.radec[1])
 
         logging.debug(f"Nexus RA: {nexus_ra}, Dec: {nexus_dec}")
-        if arr is not None:
-            arr[0, 1][0] = "Nex: RA " + nexus_ra
-            arr[0, 1][1] = "   Dec " + nexus_dec
         is_aligned = False
         p = self.get(":GW#")
         if p == "AT2#":
             is_aligned = True
-            if arr is not None:
-                arr[0, 4][1] = "Nexus is aligned"
-                arr[0, 4][0] = "'Select' syncs"
 
         return nexus_ra, nexus_dec, is_aligned, p
 

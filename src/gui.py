@@ -1,4 +1,4 @@
-from skyfield.api import load, Star, wgs84
+from skyfield.api import load
 import tkinter as tk
 from tkinter import Label, Radiobutton, StringVar, Checkbutton, Button, Frame
 from PIL import Image, ImageTk, ImageDraw, ImageOps
@@ -178,6 +178,7 @@ class EFinderGUI():
             bg=self.b_g,
             fg=self.f_g,
         ).place(x=410, y=892)
+        self.deltaCalcGUI()
 
     def solve_elapsed_time(self, elapsed_time_str):
         tk.Label(self.window, text=elapsed_time_str, width=20, anchor="e",

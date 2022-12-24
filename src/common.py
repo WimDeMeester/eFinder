@@ -1,7 +1,7 @@
 import subprocess
 import re
 from CameraInterface import CameraInterface
-from skyfield.api import load, Star, wgs84
+from skyfield.api import load, Star
 import math
 from pathlib import Path
 from dataclasses import dataclass
