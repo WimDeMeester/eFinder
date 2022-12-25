@@ -120,7 +120,7 @@ class HandPad():
             [self.home, self.nex, self.sol, self.delta,
              self.aligns, self.polar, self.reset],
             [self.summary, self.exp, self.gn, self.mode,
-             self.status, self.status, self.status],
+             self.status],
         ]
         self.nex_pos = Pos(0, 1)
         self.summary_pos = Pos(1, 0)

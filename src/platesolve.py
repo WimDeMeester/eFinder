@@ -62,9 +62,9 @@ class PlateSolve:
         )
         result_str = str(result.stdout)
         elapsed_time = time.time() - start_time
-        has_solved = "solved" in result_str
-        has_star = "The star" in result_str
-        star_name = self.get_star_name(result_str)
+        has_solved: bool = "solved" in result_str
+        has_star: bool = "The star" in result_str
+        star_name: str = self.get_star_name(result_str)
         logging.debug(f"platesolve result is: {result_str}")
         logging.debug(f"platesolve command is: {self.cmd + name_that_star + self.options}")  
         logging.debug(f"Platesolve elapsed time is {elapsed_time:.2f}")
