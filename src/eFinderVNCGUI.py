@@ -510,7 +510,7 @@ def move():
         60 + float(goto_dec[2]) / 3600
     logging.info("%s %s %s" % ("lgoto radec", ra, dec))
     alt_g, az_g = coordinates.conv_altaz(
-        nexus.get_long, nexus.get_lat, ra, dec)
+        nexus.get_long(), nexus.get_lat(), ra, dec)
     logging.info("%s %s %s" % ("target Az Alt", az_g, alt_g))
     delta_Az = (az_g - solved_altaz[1]) * 60  # +ve move scope right
     delta_Alt = (alt_g - solved_altaz[0]) * 60  # +ve move scope up

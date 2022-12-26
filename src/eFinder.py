@@ -45,7 +45,6 @@ def main(cli_data: CLIData):
     coordinates = Coordinates()
     nexus: Nexus = Nexus(output, coordinates) if cli_data.real_nexus else NexusDebug(
         output, coordinates)
-    nexus.read()
     common = Common(cwd_path=cwd_path,
                     images_path=cli_data.images_path,
                     pix_scale=pix_scale,

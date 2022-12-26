@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import os
 import math
 import re
-from Display import Display
+from Display import Output
 from Coordinates import Coordinates
 import logging
 from skyfield.api import wgs84
@@ -14,14 +14,14 @@ from skyfield.api import wgs84
 class Nexus:
     """The Nexus utility class"""
 
-    def __init__(self, display: Display, coordinates: Coordinates) -> None:
+    def __init__(self, output: Output, coordinates: Coordinates) -> None:
         """Initializes the Nexus DSC
 
         Parameters:
         handpad (Display): The handpad that is connected to the eFinder
         coordinates (Coordinates): The coordinates utility class to be used in the eFinder
         """
-        self.display = display
+        self.output = output
         self.aligned = False
         self.nexus_link = "none"
         self.coordinates = coordinates
@@ -41,7 +41,7 @@ class Nexus:
             time.sleep(0.1)
             logging.info(f"Connected to Nexus in {str(self.ser.read(self.ser.in_waiting))} ascii via USB")
             self.NexStr = "connected"
-            self.display.display("Found Nexus", "via USB", "")
+            self.output.display("Found Nexus", "via USB", "")
             time.sleep(1)
             self.nexus_link = "USB"
         except:
@@ -60,12 +60,13 @@ class Nexus:
                     time.sleep(0.1)
                     logging.info(f"Connected to Nexus in {str(s.recv(15))} ascii via wifi")
                     self.NexStr = "connected"
-                    self.display.display("Found Nexus", "via WiFi", "")
+                    self.output.display("Found Nexus", "via WiFi", "")
                     time.sleep(1)
                     self.nexus_link = "Wifi"
             except:
                 logging.info("no USB or Wifi link to Nexus")
-                self.display.display("Nexus not found", "", "")
+                self.output.display("Nexus not found", "", "")
+        self.read()
 
     def write(self, txt: str) -> None:
         """Write a message to the Nexus DSC
@@ -126,9 +127,9 @@ class Nexus:
         os.system('sudo date -u --set "%s"' % new_dt + ".000Z")
         p = self.get(":GW#")
         if p != "AT2#":
-            self.display.display("Nexus reports", "not aligned yet", "")
+            self.output.display("Nexus reports", "not aligned yet", "")
         else:
-            self.display.display("eFinder ready", "Nexus reports" + p, "")
+            self.output.display("eFinder ready", "Nexus reports" + p, "")
             self.aligned = True
         time.sleep(1)
 
@@ -148,7 +149,8 @@ class Nexus:
             abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
             float(dec[0]),
         )
-        self.altaz = self.coordinates.conv_altaz(self, *(self.radec))
+        self.altaz = self.coordinates.conv_altaz(self.long, self.lat,
+                                                 *(self.radec))
         self.scope_alt = self.altaz[0] * math.pi / 180
         self.short = ra[0] + ra[1] + dec[0] + dec[1]
         nexus_ra = self.coordinates.hh2dms(self.radec[0])
