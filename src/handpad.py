@@ -1,4 +1,4 @@
-from Display import Display, DisplayButtons
+from Display import Output, DisplayButtons
 from collections import namedtuple
 import time
 import logging
@@ -9,7 +9,8 @@ Pos = namedtuple('Pos', ['x', 'y'])
 
 
 class Commands:
-    def __init__(self, name, line1, line2, line3, up, down, left, right, select, longselect):
+    def __init__(self, name, line1, line2, line3, up, down, left, right, 
+                 select, longselect):
         self.name = name
         self.line1 = line1
         self.line2 = line2
@@ -23,14 +24,13 @@ class Commands:
 
 
 class HandPad():
-
     pos = Pos(x=0, y=0)
     offset_str = None
     nexus_tuple = ("", "")
     increment = [0, 1, 5, 1, 1]
 
-    def __init__(self, display: Display, version: str, param: Dict) -> None:
-        self.display = display
+    def __init__(self, output: Output, version: str, param: Dict) -> None:
+        self.display = output
         self.p = ""  # TODO needs to be updated
         self.param = param
 

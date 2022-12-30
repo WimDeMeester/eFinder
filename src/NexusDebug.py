@@ -1,7 +1,4 @@
 from NexusInterface import NexusInterface
-import serial
-from skyfield.api import load, Star, wgs84
-from datetime import datetime, timedelta
 import Display
 import Coordinates
 

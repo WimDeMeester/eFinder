@@ -27,8 +27,8 @@ from Display import PrintOutput, SerialOutput
 from NexusDebug import NexusDebug
 from handpad import HandPad
 from common import CameraData, CLIData, AstroData, OffsetData
-from typing import Dict
 from datetime import datetime
+from NexusInterface import NexusInterface
 
 
 version_string = "17_0"
@@ -43,8 +43,7 @@ def main(cli_data: CLIData):
     output = SerialOutput() if cli_data.real_handpad else PrintOutput()
     handpad = HandPad(output, version_string, param)
     coordinates = Coordinates()
-    nexus: Nexus = Nexus(output, coordinates) if cli_data.real_nexus else NexusDebug(
-        output, coordinates)
+    nexus: NexusInterface = Nexus(output, coordinates) if cli_data.real_nexus else NexusDebug(output, coordinates)
     common = Common(cwd_path=cwd_path,
                     images_path=cli_data.images_path,
                     pix_scale=pix_scale,

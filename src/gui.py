@@ -9,7 +9,7 @@ from Coordinates import Coordinates
 import threading
 import sys
 from efinder_core import EFinder
-from Nexus import Nexus
+from NexusInterface import NexusInterface
 import re
 import time
 import os
@@ -36,7 +36,7 @@ class EFinderGUI():
         self.coordinates = efinder.coordinates
         self.cli_data = efinder.cli_data
         self.astro_data: AstroData = efinder.astro_data
-        self.nexus: Nexus = self.astro_data.nexus
+        self.nexus: NexusInterface = self.astro_data.nexus
         self.offset_data: OffsetData = efinder.offset_data
         self.cwd_path: Path = Path.cwd()
 

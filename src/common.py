@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Tuple
-from Nexus import Nexus
+from NexusInterface import NexusInterface
 
 
 @dataclass
@@ -35,7 +35,7 @@ class CLIData:
 @dataclass
 class AstroData:
     """Class for keeping track of all astronomically related data"""
-    nexus: Nexus
+    nexus: NexusInterface
     deltaAz: float = 0
     deltaAlt: float = 0
     scope_x: float = 0

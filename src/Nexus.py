@@ -9,78 +9,16 @@ from Display import Output
 from Coordinates import Coordinates
 import logging
 from skyfield.api import wgs84
+from NexusInterface import NexusInterface
 
 
-class Nexus:
-    """The Nexus utility class"""
-
-    def __init__(self, output: Output, coordinates: Coordinates) -> None:
-        """Initializes the Nexus DSC
-
-        Parameters:
-        handpad (Display): The handpad that is connected to the eFinder
-        coordinates (Coordinates): The coordinates utility class to be used in the eFinder
-        """
-        self.output = output
-        self.aligned = False
-        self.nexus_link = "none"
-        self.coordinates = coordinates
-        self.NexStr = "not connected"
-        self.short = "no RADec"
-        self.long = 0
-        self.lat = 0
-
-        try:
-            self.ser = serial.Serial("/dev/ttyS0", baudrate=9600)
-            self.ser.write(b":P#")
-            time.sleep(0.1)
-            p = str(self.ser.read(self.ser.in_waiting), "ascii")
-            if p[0] == "L":
-                self.ser.write(b":U#")
-            self.ser.write(b":P#")
-            time.sleep(0.1)
-            logging.info(f"Connected to Nexus in {str(self.ser.read(self.ser.in_waiting))} ascii via USB")
-            self.NexStr = "connected"
-            self.output.display("Found Nexus", "via USB", "")
-            time.sleep(1)
-            self.nexus_link = "USB"
-        except:
-            self.HOST = "10.0.0.1"
-            self.PORT = 4060
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.settimeout(2)
-                    s.connect((self.HOST, self.PORT))
-                    s.send(b":P#")
-                    time.sleep(0.1)
-                    p = str(s.recv(15), "ascii")
-                    if p[0] == "L":
-                        s.send(b":U#")
-                    s.send(b":P#")
-                    time.sleep(0.1)
-                    logging.info(f"Connected to Nexus in {str(s.recv(15))} ascii via wifi")
-                    self.NexStr = "connected"
-                    self.output.display("Found Nexus", "via WiFi", "")
-                    time.sleep(1)
-                    self.nexus_link = "Wifi"
-            except:
-                logging.info("no USB or Wifi link to Nexus")
-                self.output.display("Nexus not found", "", "")
-        self.read()
-
-    def write(self, txt: str) -> None:
+class NexusConnection():
+    def write(self, txt: str):
         """Write a message to the Nexus DSC
 
         Parameters:
         txt (str): The text to send to the Nexus DSC
         """
-        # print('write',flag)
-        if self.nexus_link == "USB":
-            self.ser.write(bytes(txt.encode("ascii")))
-        else:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((self.HOST, self.PORT))
-                s.send(bytes(txt.encode("ascii")))
         logging.info(f"sent {txt} to Nexus")
 
     def get(self, txt: str) -> str:
@@ -92,18 +30,113 @@ class Nexus:
         Returns:
         str:  The requested information from the DSC
         """
-        if self.nexus_link == "USB":
-            self.ser.write(bytes(txt.encode("ascii")))
+        pass
+
+
+class NexusUSBSerialConnection(NexusConnection):
+    def __init__(self, output: Output):
+        self.output = output
+        self.connected = False
+        try:
+            self.ser = serial.Serial("/dev/ttyS0", baudrate=9600)
+            self.write(b":P#")
             time.sleep(0.1)
-            res = str(self.ser.read(self.ser.in_waiting).decode("ascii")).strip("#")
-        else:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((self.HOST, self.PORT))
-                s.send(bytes(txt.encode("ascii")))
-                time.sleep(0.1)
-                res = str(s.recv(16).decode("ascii")).strip("#")
+            p = str(self.ser.read(self.ser.in_waiting), "ascii")
+            if p[0] == "L":
+                self.write(b":U#")
+            self.write(b":P#")
+            time.sleep(0.1)
+            logging.info(f"Connected to Nexus in {str(self.ser.read(self.ser.in_waiting))} ascii via USB")
+            self.connected = True
+            output.display("Found Nexus", "via USB", "")
+            self.nexus_link = "USB"
+            time.sleep(1)  # why is this needed?
+        except Exception:
+            self.NexStr = "not connected"
+
+    def write(self, txt: str):
+        self.ser.write(bytes(txt.encode("ascii")))
+        super().write(txt)
+
+    def get(self, txt: str) -> str:
+        self.write(txt)
+        time.sleep(0.1)
+        res = str(self.ser.read(self.ser.in_waiting).decode("ascii")).strip("#")
         logging.info(f"sent {txt} got {res} from Nexus")
         return res
+
+
+class NexusSocketConnection(NexusConnection):
+    def __init__(self, output: Output):
+        self.output = output
+        self.HOST = "10.0.0.1"
+        self.PORT = 4060
+        self.connected = False
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(2)
+                s.connect((self.HOST, self.PORT))
+                s.send(b":P#")
+                time.sleep(0.1)
+                p = str(s.recv(15), "ascii")
+                if p[0] == "L":
+                    s.send(b":U#")
+                s.send(b":P#")
+                time.sleep(0.1)
+                logging.info(f"Connected to Nexus in {str(s.recv(15))} ascii via wifi")
+                self.connected = True
+                output.display("Found Nexus", "via WiFi", "")
+                time.sleep(1)
+                self.nexus_link = "Wifi"
+        except Exception as e:
+            logging.debug(f"no USB or Wifi link to Nexus: {e}")
+
+    def write(self, txt: str):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((self.HOST, self.PORT))
+            s.send(bytes(txt.encode("ascii")))
+        super().write(txt)
+
+    def get(self, txt: str) -> str:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((self.HOST, self.PORT))
+            s.send(bytes(txt.encode("ascii")))
+            time.sleep(0.1)
+            res = str(s.recv(16).decode("ascii")).strip("#")
+        logging.info(f"sent {txt} got {res} from Nexus")
+        return res
+
+
+class Nexus(NexusInterface):
+    """The Nexus utility class"""
+
+    def __init__(self, output: Output, coordinates: Coordinates) -> None:
+        """Initializes the Nexus DSC
+
+        Parameters:
+        handpad (Display): The handpad that is connected to the eFinder
+        coordinates (Coordinates): The coordinates utility class to be used in the eFinder
+        """
+        self.output = output
+        self.aligned = False
+        self.coordinates = coordinates
+        self.NexStr = "not connected"
+        self.short = "no RADec"
+        self.long = 0
+        self.lat = 0
+
+        connection = NexusUSBSerialConnection(output)
+        if not connection.connected:
+            connection = NexusSocketConnection(output)
+        if not connection.connected:
+            logging.info("no USB or Wifi link to Nexus")
+            output.display("Nexus not found", "", "")
+
+        self.connection = connection
+        self.read()
+
+    def get(self, txt: str) -> str:
+        return self.connection.get(txt)
 
     def read(self) -> None:
         """Establishes that Nexus DSC is talking to us and get observer location and time data"""
@@ -226,7 +259,7 @@ class Nexus:
         Returns:
         str: How the Nexus DSC is connected to the eFidner
         """
-        return self.nexus_link
+        return self.connection.nexus_link
 
     def get_nex_str(self) -> str:
         """Returns if the Nexus DSC is connected to the eFinder
@@ -234,7 +267,7 @@ class Nexus:
         Returns:
         str: "connected" or "not connected"
         """
-        return self.NexStr
+        return "connected" if self.connection.connected else "not connected"
 
     def is_aligned(self) -> bool:
         """Returns if the Nexus DSC is connected to the eFinder

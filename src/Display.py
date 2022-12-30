@@ -47,6 +47,7 @@ class SerialOutput(Output):
 
     def __init__(self, port="/dev/ttyACM0", baudrate=115200) -> None:
         try:
+            logging.debug(f"Connecting serial output, {port=}, {baudrate=}")
             self.box = serial.Serial(
                 port,
                 baudrate,
