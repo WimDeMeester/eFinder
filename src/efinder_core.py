@@ -146,7 +146,7 @@ class EFinder():
         if not has_solved:
             logging.info("Bad Luck - Solve Failed")
             output.display("Not Solved", "", "")
-            return
+            return False
         if offset_flag and has_star:
             table, _ = fitsio.read(self.cwd_path / "capture.axy", header=True)
             self.offset_data.offset = table[0][0], table[0][1]
@@ -168,6 +168,7 @@ class EFinder():
                                "time: " + str(elapsed_time)[0:4] + " s"
                                )
         self.deltaCalc(elapsed_time)
+
 
     def deltaCalc(self, elapsed_time):
         deltaAz, deltaAlt = self.common.deltaCalc(

@@ -889,6 +889,8 @@ class EFinderGUI():
     def solve(self):
         logging.debug("TODO solve")
         self.efinder.solveImage()
+        # deltacalcgui?
+        # readTarget
 
     def goto(self):
         logging.debug("TODO goto")
