@@ -24,7 +24,7 @@ from pathlib import Path
 import fitsio
 from Coordinates import Coordinates
 from platesolve import PlateSolve
-from common import Common
+from common import Common, ParamData
 from handpad import HandPad
 from common import CameraData, CLIData, AstroData, OffsetData
 from typing import Dict
@@ -35,21 +35,21 @@ class EFinder():
     def __init__(self, handpad: HandPad, common: Common, coordinates: Coordinates,
                  camera_data: CameraData, cli_data: CLIData,
                  astro_data: AstroData, offset_data: OffsetData,
-                 param: Dict):
+                 param_data: ParamData):
         self.handpad = handpad
         self.camera_data = camera_data
         self.cli_data = cli_data
         self.astro_data = astro_data
         self.offset_data = offset_data
         self.cwd_path = Path.cwd()
-        self.param = param
+        self.param = param_data
         self.common = common
         self.coordinates = coordinates
         self.version = self.common.get_version()
         self.platesolve = PlateSolve(
             camera_data.pix_scale, self.cli_data.images_path)
         _, _, dxstr, dystr = self.common.dxdy2pixel(
-            float(self.param["d_x"]), float(self.param["d_y"])
+            float(self.param.d_x), float(self.param.d_y)
         )
         self.offset_data.offset_str = dxstr + "," + dystr
         scan = threading.Thread(target=self.reader)
@@ -115,15 +115,15 @@ class EFinder():
 
     def capture(self, offset_flag=False):
         extras = {}
-        if self.param["Test mode"] == "1":
+        if self.param.test_mode == "1":
             if offset_flag:
                 extras['testimage'] = 'polaris'
             else:
                 extras['testimage'] = 'm13'
         radec = self.astro_data.nexus.get_short()
         self.camera_data.camera.capture(
-            int(float(self.param["Exposure"]) * 1000000),
-            int(float(self.param["Gain"])),
+            int(float(self.param.exposure) * 1000000),
+            int(float(self.param.gain)),
             radec,
             extras
         )
@@ -195,8 +195,8 @@ class EFinder():
         scope_x = self.offset_data.offset[0]
         scope_y = self.offset_data.offset[1]
         d_x, d_y, dxstr, dystr = self.common.pixel2dxdy(scope_x, scope_y)
-        self.param["d_x"] = d_x
-        self.param["d_y"] = d_y
+        self.param.d_x = d_x
+        self.param.d_y = d_y
         EFinder.save_param(self.cwd_path, self.param)
         self.offset_data.offset_str = dxstr + "," + dystr
         self.handpad.set_lines(self.handpad.polar_pos,
@@ -251,8 +251,8 @@ class EFinder():
 
     def reset_offset(self):
         # global param, arr
-        self.param["d_x"] = 0
-        self.param["d_y"] = 0
+        self.param.d_x = 0
+        self.param.d_y = 0
         self.offset_data.offset_str = "0,0"
         self.handpad.set_lines(self.handpad.polar_pos, None,
                                f"new {self.offset_data.offset_str}", None)
@@ -262,7 +262,7 @@ class EFinder():
         EFinder.save_param(self.cwd_path, self.param)
 
     @staticmethod
-    def get_param(cwd_path: Path):
+    def get_param(cwd_path: Path) -> ParamData:
         param = dict()
         # global param, self.offset_data.offset_str
         if os.path.exists(cwd_path / "eFinder.config"):
@@ -270,10 +270,11 @@ class EFinder():
                 for line in h:
                     line = line.strip("\n").split(":")
                     param[line[0]] = str(line[1])
-        return param
+        return ParamData(param)
 
     @staticmethod
-    def save_param(cwd_path: Path, param: Dict):
+    def save_param(cwd_path: Path, param_data: ParamData):
+        param = param_data.get_dict()
         # global param
         with open(cwd_path / "eFinder.config", "w") as h:
             for key, value in param.items():

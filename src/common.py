@@ -33,6 +33,47 @@ class CLIData:
 
 
 @dataclass
+class ParamData:
+    """Class for keeping track of the parameters read from file.
+    TODO: could use some 3rd party library to avoid having to enumerate
+    all options.
+    """
+    exposure: float
+    gain: float
+    test_mode: bool
+    camera_type: str
+    d_x: float
+    d_y: float
+    alt_speed: float
+    az_speed: float
+    default_eyepiece: str
+    default_focal_length: float
+    scope_focal_length: float
+
+    mapping = {"Exposure": "exposure", "Gain": "gain",
+               "Test mode": "test_mode",
+               "Camera Type": "camera_type",
+               "d_x": "d_x", "d_y": "d_y", "altSpeed": "alt_speed",
+               "azSpeed": "az_speed", "default_eyepiece": "default_eyepiece",
+               "default_focal_length": "default_focal_length",
+               "scope_focal_length": "scope_focal_length"}
+
+    def __init__(self, param):
+        # check that there are no unknown entries in the param dict
+        for key in param:
+            if key not in self.mapping.keys():
+                raise ValueError("Unknown parameter: {}".format(key))
+
+        for entry in self.mapping.keys():
+            if entry in param:
+                setattr(self, self.mapping[entry], param[entry])
+
+    def get_dict(self):
+        """Return a dict with the parameters"""
+        return {self.mapping[key]: getattr(self, key) for key in self.mapping}
+
+
+@dataclass
 class AstroData:
     """Class for keeping track of all astronomically related data"""
     nexus: NexusInterface

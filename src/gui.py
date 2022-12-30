@@ -214,7 +214,7 @@ class EFinderGUI():
             draw = ImageDraw.Draw(img2)
             tfov = (
                 (float(self.EPlength.get()) * height /
-                 float(self.param["scope_focal_length"]))
+                 float(self.param.scope_focal_length))
                 * 60
                 / h
             ) / 2  # half tfov in pixels
@@ -295,14 +295,14 @@ class EFinderGUI():
 # the offset methods:
 
     def save_offset(self):
-        self.param["d_x"], self.param["d_y"] = offset
-        self.save_param()
+        self.param.d_x, self.param.d_y = offset
+        self.efinder.save_param(self.efinder.cwd_path, self.param)
         self.get_offset()
-        self.box_write("offset saved", True)
+        self.box_write("offset saved")
 
     def get_offset(self):
         x_offset_saved, y_offset_saved, dxstr_saved, dystr_saved = self.common.dxdy2pixel(
-            float(self.param["d_x"]), float(self.param["d_y"])
+            float(self.param.d_x), float(self.param.d_y)
         )
         tk.Label(
             self.window,
@@ -316,9 +316,9 @@ class EFinderGUI():
     def use_saved_offset(self):
         global offset
         x_offset_saved, y_offset_saved, dxstr, dystr = self.common.dxdy2pixel(
-            float(self.param["d_x"]), float(self.param["d_y"])
+            float(self.param.d_x), float(self.param.d_y)
         )
-        offset = float(self.param["d_x"]), float(self.param["d_y"])
+        offset = float(self.param.d_x), float(self.param.d_y)
         tk.Label(self.window, text=dxstr + "," + dystr, bg=self.b_g, fg=self.f_g, width=8).place(
             x=60, y=400
         )
@@ -846,7 +846,7 @@ class EFinderGUI():
             variable=self.EP,
         ).pack(padx=1, pady=2)
         self.EPlength = StringVar()
-        self.EPlength.set(float(self.param["default_eyepiece"]))
+        self.EPlength.set(float(self.param.default_eyepiece))
         for i in range(len(self.eye_piece)):
             tk.Radiobutton(
                 EP_frame,
@@ -926,8 +926,8 @@ class EFinderGUI():
 
     # UI only method
     def moveScope(self, dAz, dAlt):
-        azPulse = abs(dAz / float(self.param["azSpeed"]))  # seconds
-        altPulse = abs(dAlt / float(self.param["altSpeed"]))
+        azPulse = abs(dAz / float(self.param.az_speed))  # seconds
+        altPulse = abs(dAlt / float(self.param.alt_speed))
         logging.debug(
             "%s %.2f  %s  %.2f %s" % (
                 "azPulse:", azPulse, "altPulse:", altPulse, "seconds")

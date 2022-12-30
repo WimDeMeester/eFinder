@@ -26,7 +26,7 @@ from common import Common
 from Display import PrintOutput, SerialOutput
 from NexusDebug import NexusDebug
 from handpad import HandPad
-from common import CameraData, CLIData, AstroData, OffsetData
+from common import CameraData, CLIData, AstroData, OffsetData, ParamData
 from datetime import datetime
 from NexusInterface import NexusInterface
 
@@ -39,7 +39,7 @@ def main(cli_data: CLIData):
     logging.info(f"Options are: {cli_data}")
     cwd_path = Path.cwd()
     pix_scale = 15
-    param = EFinder.get_param(cwd_path)
+    param: ParamData = EFinder.get_param(cwd_path)
     output = SerialOutput() if cli_data.real_handpad else PrintOutput()
     handpad = HandPad(output, version_string, param)
     coordinates = Coordinates()
@@ -58,7 +58,7 @@ def main(cli_data: CLIData):
                           "Nexus is aligned",
                           None)
 
-    camera_type = param["Camera Type"] if cli_data.real_camera else 'TEST'
+    camera_type = param.camera_type if cli_data.real_camera else 'TEST'
     camera_debug = common.pick_camera('TEST', output, images_path)
     camera = common.pick_camera(camera_type, output, images_path)
 

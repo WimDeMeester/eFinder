@@ -3,6 +3,7 @@ from collections import namedtuple
 import time
 import logging
 from typing import Dict
+from common import ParamData
 
 
 Pos = namedtuple('Pos', ['x', 'y'])
@@ -29,7 +30,7 @@ class HandPad():
     nexus_tuple = ("", "")
     increment = [0, 1, 5, 1, 1]
 
-    def __init__(self, output: Output, version: str, param: Dict) -> None:
+    def __init__(self, output: Output, version: str, param: ParamData) -> None:
         self.display = output
         self.p = ""  # TODO needs to be updated
         self.param = param
@@ -90,21 +91,21 @@ class HandPad():
             select="self.go_solve()", longselect=""
         )
         self.exp = Commands(
-            name="exp",
-            line1="Exposure", line2=self.param["Exposure"], line3="",
+            name="exposure",
+            line1="Exposure", line2=self.param.exposure, line3="",
             up="self.up_down_inc(1,1)", down="self.up_down_inc(1,-1)",
             left="self.left_right(-1)", right="self.left_right(1)",
             select="self.go_solve()", longselect="self.goto()"
         )
         self.gn = Commands(
-            name="gn",
-            line1="Gain", line2=self.param["Gain"], line3="",
+            name="gain",
+            line1="Gain", line2=self.param.gain, line3="",
             up="self.up_down_inc(2,1)", down="self.up_down_inc(2,-1)",
             left="self.left_right(-1)", right="self.left_right(1)",
             select="self.go_solve()", longselect="self.goto()")
         self.mode = Commands(
-            name="mode",
-            line1="Test mode", line2=int(self.param["Test mode"]), line3="",
+            name="test_mode",
+            line1="Test mode", line2=int(self.param.test_mode), line3="",
             up="self.flip()", down="self.flip()",
             left="self.left_right(-1)", right="self.left_right(1)",
             select="self.go_solve()", longselect="self.goto()")
@@ -187,24 +188,22 @@ class HandPad():
         self.pos = Pos(self.pos.x, self.pos.y+v)
         self.display_array()
 
-    def up_down_inc(self, i, sign):
-        self.get(self.pos).line2 = int(
-            float(self.get(self.pos).line2)) + self.increment[i] * sign
-        self.param[self.get(self.pos).line1] = float(self.get(self.pos).line2)
+    def up_down_inc(self, attribute, i, sign):
+        setattr(self.param, attribute, getattr(self.param, attribute) +
+                self.increment[i] * sign)
         self.display_array()
         self.update_summary()
         time.sleep(0.1)
 
-    def flip(self):
-        self.get(self.pos).line2 = 1 - int(float(self.get(self.pos).line2))
-        self.param[self.get(self.pos).line1] = str((self.get(self.pos).line2))
+    def flip(self, attribute):
+        setattr(self.param, attribute, 1 - getattr(self.param, attribute))
         self.display_array()
         self.update_summary()
         time.sleep(0.1)
 
     def update_summary(self):
         self.get(
-            self.summary_pos).line1 = f'Ex:{str(self.param["Exposure"])}  Gn:{str(self.param["Gain"])}'
+            self.summary_pos).line1 = f'Ex:{str(self.param.exposure)}  Gn:{str(self.param.gain)}'
         self.get(
-            self.summary_pos).line2 = f'Test mode:{str(self.param["Test mode"])}'
+            self.summary_pos).line2 = f'Test mode:{str(self.param.test_mode)}'
         # save_param()
