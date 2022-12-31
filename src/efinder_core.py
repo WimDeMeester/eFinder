@@ -113,13 +113,12 @@ class EFinder():
                 self.astro_data.nexus.set_aligned(True)
         return
 
-    def capture(self, offset_flag=False):
-        extras = {}
+    def capture(self, offset_flag=False, extras={}):
         if self.param.test_mode == "1":
             if offset_flag:
                 extras['testimage'] = 'polaris'
             else:
-                extras['testimage'] = 'm13'
+                extras['testimage'] = 'm31'
         radec = self.astro_data.nexus.get_short()
         self.camera_data.camera.capture(
             int(float(self.param.exposure) * 1000000),

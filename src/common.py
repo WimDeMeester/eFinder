@@ -40,6 +40,8 @@ class ParamData:
     """
     exposure: float
     gain: float
+    exposure_range: List[str]
+    gain_range: List[str]
     test_mode: bool
     camera_type: str
     d_x: float
@@ -49,19 +51,30 @@ class ParamData:
     default_eyepiece: str
     default_focal_length: float
     scope_focal_length: float
+    eyepiece1: str 
+    eyepiece2: str
+    eyepiece3: str
+    eyepiece4: str
 
     mapping = {"Exposure": "exposure", "Gain": "gain",
+               "Exp_range": "exposure_range",
+               "Gain_range": "gain_range",
                "Test mode": "test_mode",
                "Camera Type": "camera_type",
                "d_x": "d_x", "d_y": "d_y", "altSpeed": "alt_speed",
                "azSpeed": "az_speed", "default_eyepiece": "default_eyepiece",
                "default_focal_length": "default_focal_length",
-               "scope_focal_length": "scope_focal_length"}
+               "scope_focal_length": "scope_focal_length",
+               "Eyepiece1": "eyepiece1",
+               "Eyepiece2": "eyepiece2",
+               "Eyepiece3": "eyepiece3",
+               "Eyepiece4": "eyepiece4",
+               }
 
     def __init__(self, param):
         # check that there are no unknown entries in the param dict
         for key in param:
-            if key not in self.mapping.keys():
+            if key not in self.mapping.keys() and key[0] != "#":
                 raise ValueError("Unknown parameter: {}".format(key))
 
         for entry in self.mapping.keys():
@@ -69,9 +82,15 @@ class ParamData:
                 setattr(self, self.mapping[entry], param[entry])
 
     def get_dict(self):
-        """Return a dict with the parameters"""
-        return {self.mapping[key]: getattr(self, key) for key in self.mapping}
+        """Return a dict with the parameters if present """
+        param = {}
+        for entry in self.mapping.keys():
+            if hasattr(self, self.mapping[entry]):
+                param[entry] = getattr(self, self.mapping[entry])
+        return param
 
+    def __str__(self):
+        return str(self.get_dict())
 
 @dataclass
 class AstroData:

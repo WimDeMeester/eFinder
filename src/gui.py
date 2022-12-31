@@ -406,8 +406,8 @@ class EFinderGUI():
 
         options_frame = Frame(self.window, bg="black")
         options_frame.place(x=20, y=270)
-        polaris = StringVar()
-        polaris.set("0")
+        self.polaris = StringVar()
+        self.polaris.set("0")
         tk.Checkbutton(
             options_frame,
             text="Polaris image",
@@ -417,10 +417,10 @@ class EFinderGUI():
             activebackground="red",
             bg=b_g,
             fg=f_g,
-            variable=polaris,
+            variable=self.polaris,
         ).pack(padx=1, pady=1)
-        m31 = StringVar()
-        m31.set("0")
+        self.m31 = StringVar()
+        self.m31.set("0")
         tk.Checkbutton(
             options_frame,
             text="M31 image",
@@ -430,7 +430,7 @@ class EFinderGUI():
             activebackground="red",
             bg=b_g,
             fg=f_g,
-            variable=m31,
+            variable=self.m31,
         ).pack(padx=1, pady=1)
 
         self.box_write(
@@ -883,7 +883,13 @@ class EFinderGUI():
 
     def read_nexus_and_capture(self):
         logging.debug("TODO read_nexus_and_capture")
-        self.efinder.capture()
+        extras = {}
+        if self.polaris.get() == "1":
+            extras['testimage'] = "polaris"
+        elif self.m31.get() == "1":
+            extras['testimage'] = "m31"
+
+        self.efinder.capture(extras=extras)
         self.image_show()
 
     def solve(self):
