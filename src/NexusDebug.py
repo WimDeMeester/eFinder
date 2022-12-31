@@ -1,6 +1,7 @@
 from NexusInterface import NexusInterface
 import Display
 import Coordinates
+from skyfield.api import wgs84
 
 
 class NexusDebug(NexusInterface):
@@ -25,6 +26,7 @@ class NexusDebug(NexusInterface):
         self.short = "no_RADec"
         self.long = 40
         self.lat = 5
+        self.location = self.coordinates.get_earth() + wgs84.latlon(self.lat, self.long)
 
     def write(self, txt: str) -> None:
         """Write a message to the Nexus DSC
