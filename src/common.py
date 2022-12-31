@@ -92,6 +92,7 @@ class ParamData:
     def __str__(self):
         return str(self.get_dict())
 
+
 @dataclass
 class AstroData:
     """Class for keeping track of all astronomically related data"""

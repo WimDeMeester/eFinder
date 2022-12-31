@@ -12,6 +12,7 @@ from efinder_core import EFinder
 from NexusInterface import NexusInterface
 import re
 import time
+import math
 import os
 
 
@@ -1073,56 +1074,65 @@ class EFinderGUI():
         logging.debug("TODO measure_offset")
 
     def readTarget(self):
-        """ """ 
+        """ read from nexus if there's a target set """
         logging.debug("TODO readTarget")
-        goto_ra = nexus.get(":Gr#")
-        goto_dec = nexus.get(":Gd#")
+        goto_ra = self.nexus.get(":Gr#")
+        goto_dec = self.nexus.get(":Gd#")
         if (
             goto_ra[0:2] == "00" and goto_ra[3:5] == "00"
         ):  # not a valid goto target set yet.
-            eFinderGUI.box_write("no GoTo target", True)
+            self.box_write("no GoTo target")
             return
         ra = goto_ra.split(":")
         dec = re.split(r"[:*]", goto_dec)
-        print("goto RA & Dec", goto_ra, goto_dec)
+        logging.info(f"goto RA & Dec {goto_ra=} {goto_dec=}")
         goto_radec = (
             float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
         ), math.copysign(
             abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
             float(dec[0]),
         )
-        goto_altaz = coordinates.conv_altaz(
-            nexus.get_long(), nexus.get_lat(), *(goto_radec))
+        solved_altaz = self.astro_data.solved_altaz
+        scope_alt_rad = solved_altaz[0] * math.pi / 180
+        goto_altaz = self.coordinates.conv_altaz(
+            self.astro_data.nexus.get_long(), self.astro_data.nexus.get_lat(), *(goto_radec))
+        self.show_goto_target_and_diff(goto_radec, goto_altaz,
+                                       self.efinder.astro_data.solved_altaz,
+                                       scope_alt_rad)
 
+    def show_goto_target_and_diff(self, goto_radec, goto_altaz, solved_altaz,
+                                  scope_alt_rad):
+        b_g = self.b_g
+        f_g = self.f_g
         tk.Label(
-            window,
+            self.window,
             width=10,
-            text=coordinates.hh2dms(goto_radec[0]),
+            text=self.coordinates.hh2dms(goto_radec[0]),
             anchor="e",
             bg=b_g,
             fg=f_g,
         ).place(x=605, y=804)
         tk.Label(
-            window,
+            self.window,
             width=10,
             anchor="e",
-            text=coordinates.dd2dms(goto_radec[1]),
+            text=self.coordinates.dd2dms(goto_radec[1]),
             bg=b_g,
             fg=f_g,
         ).place(x=605, y=826)
         tk.Label(
-            window,
+            self.window,
             width=10,
             anchor="e",
-            text=coordinates.ddd2dms(goto_altaz[1]),
+            text=self.coordinates.ddd2dms(goto_altaz[1]),
             bg=b_g,
             fg=f_g,
         ).place(x=605, y=870)
         tk.Label(
-            window,
+            self.window,
             width=10,
             anchor="e",
-            text=coordinates.dd2dms(goto_altaz[0]),
+            text=self.coordinates.dd2dms(goto_altaz[0]),
             bg=b_g,
             fg=f_g,
         ).place(x=605, y=892)
@@ -1133,15 +1143,15 @@ class EFinderGUI():
             else:
                 dt_Az = dt_Az - 360
         # actually this is delta'x' in arcminutes
-        dt_Az = 60 * (dt_Az * math.cos(scopeAlt))
+        dt_Az = 60 * (dt_Az * math.cos(scope_alt_rad))
         dt_Alt = solved_altaz[0] - goto_altaz[0]
         dt_Alt = 60 * (dt_Alt)  # in arcminutes
         dt_Azstr = "{: .1f}".format(float(dt_Az)).ljust(8)[:8]
         dt_Altstr = "{: .1f}".format(float(dt_Alt)).ljust(8)[:8]
-        tk.Label(window, width=10, anchor="e", text=dt_Azstr, bg=b_g, fg=f_g).place(
+        tk.Label(self.window, width=10, anchor="e", text=dt_Azstr, bg=b_g, fg=f_g).place(
             x=500, y=870
         )
-        tk.Label(window, width=10, anchor="e", text=dt_Altstr, bg=b_g, fg=f_g).place(
+        tk.Label(self.window, width=10, anchor="e", text=dt_Altstr, bg=b_g, fg=f_g).place(
             x=500, y=892
         )
 
