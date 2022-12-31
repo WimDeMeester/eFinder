@@ -88,14 +88,14 @@ class EFinder():
                 msg = "Invalid position"
                 logging.info(msg)
                 output.display(cmd.line1, msg, cmd.line3)
-                return [msg]
+                return [msg], None
             nexus_response = nexus.get(align_dec)
             logging.info(align_dec)
             if nexus_response == "0":
                 msg = "Invalid position"
                 logging.info(msg)
                 output.display(cmd.line1, msg, cmd.line3)
-                return [msg]
+                return [msg], None
             reply = nexus.get(":CM#")
             msg = [f"Sent :CM#, {reply=}"]
             logging.info(msg[0])
@@ -121,7 +121,7 @@ class EFinder():
                     "Nexus reply " + p[0:3],
                 )
                 self.astro_data.nexus.set_aligned(True)
-        return msg
+        return msg, p
 
     def capture(self, offset_flag=False, extras={}):
         if self.param.test_mode == "1":

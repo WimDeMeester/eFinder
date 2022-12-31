@@ -14,6 +14,7 @@ import re
 import time
 import math
 import os
+import glob 
 
 
 class EFinderGUI():
@@ -96,6 +97,7 @@ class EFinderGUI():
         ).place(x=225, y=892)
 
     def do_button(self, event):
+        # TODO replace the standard handpad operation?
         logging.info(f"do_button with {event=}")
     #     global handpad, coordinates, solved_radec
     #     logging.debug(f"button event: {button}")
@@ -292,7 +294,7 @@ class EFinderGUI():
         self.lbl_date.config(text=t.utc_strftime("%d %b %Y"))
         self.lbl_LST.after(1000, self.sidereal)
 
-# the offset methods:
+# TODO the offset methods:
 
     def save_offset(self):
         self.param.d_x, self.param.d_y = offset
@@ -878,19 +880,19 @@ class EFinderGUI():
         return img.resize((w, h), Image.LANCZOS)
 
     def align(self):
-        msg = self.efinder.align(show_image=False)
+        msg, p = self.efinder.align(show_image=False)
         for message in msg:
             # show messages
             self.box_write(message)
-            tk.Label(window, text=message).place(x=20, y=680)
+            tk.Label(self.window, text=message).place(x=20, y=680)
         # status updates
         tk.Label(self.window, text="align count: " + str(self.astro_data.align_count), bg=self.b_g, fg=self.f_g).place(
             x=20, y=600
         )
         tk.Label(self.window, text="Nexus report: " +
                  p[0:3], bg=self.b_g, fg=self.f_g).place(x=20, y=620)
-        #//readnexusgui
-        #//deltacalcgui  
+        self.update_nexus_GUI()
+        self.deltaCalcGUI()
         
 
     def read_nexus_and_capture(self):
@@ -906,7 +908,7 @@ class EFinderGUI():
 
     def solve(self):
         solved, elapsed_time = self.efinder.solveImage()
-        self.solve_elapsed_time(elapsed_time)
+        self.show_elapsed_time(elapsed_time)
 
         if not solved: 
             solve_image_failed(b_g, f_g)
