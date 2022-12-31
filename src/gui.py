@@ -894,9 +894,24 @@ class EFinderGUI():
 
     def solve(self):
         logging.debug("TODO solve")
-        self.efinder.solveImage()
+        solved, elapsed_time = self.efinder.solveImage()
+
+        tk.Label(self.window, text=f"{elapsed_time:.2f} s", width=20, anchor="e", bg=self.b_g, fg=self.f_g).place(x=315, y=936)
+
+        if not solved: 
+            solve_image_failed(b_g, f_g, elapsed_time, window)
+            return
+        logging.debug(f"Found star is {self.offset_data.offset_star_name}")
+        if self.offset_data.offset_star_name == "":
+            self.box_write(" no named star")
+        else:
+            self.box_write(self.offset_data.offset_star_name.star_name + " found")
+        self.box_write("solved")
+        self.deltaCalcGUI()
+        self.readTarget()
         # deltacalcgui?
         # readTarget
+        logging.debug("Solve done")
 
     def goto(self):
         logging.debug("TODO goto")
@@ -1058,7 +1073,79 @@ class EFinderGUI():
         logging.debug("TODO measure_offset")
 
     def readTarget(self):
+        """ """ 
         logging.debug("TODO readTarget")
+        goto_ra = nexus.get(":Gr#")
+        goto_dec = nexus.get(":Gd#")
+        if (
+            goto_ra[0:2] == "00" and goto_ra[3:5] == "00"
+        ):  # not a valid goto target set yet.
+            eFinderGUI.box_write("no GoTo target", True)
+            return
+        ra = goto_ra.split(":")
+        dec = re.split(r"[:*]", goto_dec)
+        print("goto RA & Dec", goto_ra, goto_dec)
+        goto_radec = (
+            float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
+        ), math.copysign(
+            abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
+            float(dec[0]),
+        )
+        goto_altaz = coordinates.conv_altaz(
+            nexus.get_long(), nexus.get_lat(), *(goto_radec))
+
+        tk.Label(
+            window,
+            width=10,
+            text=coordinates.hh2dms(goto_radec[0]),
+            anchor="e",
+            bg=b_g,
+            fg=f_g,
+        ).place(x=605, y=804)
+        tk.Label(
+            window,
+            width=10,
+            anchor="e",
+            text=coordinates.dd2dms(goto_radec[1]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=605, y=826)
+        tk.Label(
+            window,
+            width=10,
+            anchor="e",
+            text=coordinates.ddd2dms(goto_altaz[1]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=605, y=870)
+        tk.Label(
+            window,
+            width=10,
+            anchor="e",
+            text=coordinates.dd2dms(goto_altaz[0]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=605, y=892)
+        dt_Az = solved_altaz[1] - goto_altaz[1]
+        if abs(dt_Az) > 180:
+            if dt_Az < 0:
+                dt_Az = dt_Az + 360
+            else:
+                dt_Az = dt_Az - 360
+        # actually this is delta'x' in arcminutes
+        dt_Az = 60 * (dt_Az * math.cos(scopeAlt))
+        dt_Alt = solved_altaz[0] - goto_altaz[0]
+        dt_Alt = 60 * (dt_Alt)  # in arcminutes
+        dt_Azstr = "{: .1f}".format(float(dt_Az)).ljust(8)[:8]
+        dt_Altstr = "{: .1f}".format(float(dt_Alt)).ljust(8)[:8]
+        tk.Label(window, width=10, anchor="e", text=dt_Azstr, bg=b_g, fg=f_g).place(
+            x=500, y=870
+        )
+        tk.Label(window, width=10, anchor="e", text=dt_Altstr, bg=b_g, fg=f_g).place(
+            x=500, y=892
+        )
+
+
 
     def box_write(self, new_line):
         t = self.ts.now()
