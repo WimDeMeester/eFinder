@@ -99,8 +99,6 @@ class AstroData:
     nexus: NexusInterface
     deltaAz: float = 0
     deltaAlt: float = 0
-    scope_x: float = 0
-    scope_y: float = 0
     align_count: int = 0
     sync_count: int = 0
     solved: bool = False
@@ -214,10 +212,3 @@ class Common:
             import CameraDebug
             camera = CameraDebug.CameraDebug(images_path, images_path)
         return camera
-
-    def read_nexus():
-        nexus.read_altAz(None)
-        nexus_radec = self.nexus.get_radec()
-        nexus_altaz = self.nexus.get_altAz()
-        nexus_radec = self.nexus.get_radec()
-        nexus_altaz = self.nexus.get_altAz()

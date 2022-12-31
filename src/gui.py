@@ -49,7 +49,7 @@ class EFinderGUI():
         self.window.bind("<<OLED_Button>>", self.do_button)
         self.setup_sidereal()
         # self.sidereal()
-        # self.update_nexus_GUI()
+        self.update_nexus_GUI()
         sid = threading.Thread(target=self.sidereal)
         sid.daemon = True
         sid.start()
@@ -126,7 +126,7 @@ class EFinderGUI():
     #             "d:" + str(deltaAz)[:6] + "," + str(deltaAlt)[:6],
     #         )
 
-    def solve_image_failed(self, elapsed_time, b_g=None, f_g=None):
+    def solve_image_failed(self, b_g=None, f_g=None):
         self.box_write("Solve Failed", True)
         if b_g is None or f_g is None:
             b_g = self.b_g
@@ -143,8 +143,6 @@ class EFinderGUI():
         tk.Label(
             self.window, width=10, anchor="e", text="no solution", bg=b_g, fg=f_g
         ).place(x=410, y=892)
-        tk.Label(self.window, text=elapsed_time,
-                 bg=b_g, fg=f_g).place(x=315, y=936)
 
     def solve_image_success(self, solved_radec, solved_altaz):
         tk.Label(
@@ -181,8 +179,9 @@ class EFinderGUI():
         ).place(x=410, y=892)
         self.deltaCalcGUI()
 
-    def solve_elapsed_time(self, elapsed_time_str):
-        tk.Label(self.window, text=elapsed_time_str, width=20, anchor="e",
+    def show_elapsed_time(self, elapsed_time):
+        """ Show the elapsed time in the GUI """
+        tk.Label(self.window, text=f"{elapsed_time:.2f} s", width=20, anchor="e",
                  bg=self.b_g, fg=self.f_g).place(x=315, y=936)
 
     def image_show(self):
@@ -867,9 +866,8 @@ class EFinderGUI():
         self.window.mainloop()
 
     def on_closing(self):
-        # TODO found out how to save params again
-        # self.save_param()
-        # self.handpad.display("Program closed", "via VNCGUI", "")
+        self.efinder.save_param(self.efinder.cwd_path, self.param)
+        self.efinder.handpad.display.display("Program closed", "via VNCGUI", "")
         sys.exit()
 
     def zoom_at(self, img, x, y, zoom):
@@ -880,10 +878,23 @@ class EFinderGUI():
         return img.resize((w, h), Image.LANCZOS)
 
     def align(self):
-        logging.debug("TODO align")
+        msg = self.efinder.align(show_image=False)
+        for message in msg:
+            # show messages
+            self.box_write(message)
+            tk.Label(window, text=message).place(x=20, y=680)
+        # status updates
+        tk.Label(self.window, text="align count: " + str(self.astro_data.align_count), bg=self.b_g, fg=self.f_g).place(
+            x=20, y=600
+        )
+        tk.Label(self.window, text="Nexus report: " +
+                 p[0:3], bg=self.b_g, fg=self.f_g).place(x=20, y=620)
+        #//readnexusgui
+        #//deltacalcgui  
+        
 
     def read_nexus_and_capture(self):
-        logging.debug("TODO read_nexus_and_capture")
+        self.update_nexus_GUI()
         extras = {}
         if self.polaris.get() == "1":
             extras['testimage'] = "polaris"
@@ -894,13 +905,11 @@ class EFinderGUI():
         self.image_show()
 
     def solve(self):
-        logging.debug("TODO solve")
         solved, elapsed_time = self.efinder.solveImage()
-
-        tk.Label(self.window, text=f"{elapsed_time:.2f} s", width=20, anchor="e", bg=self.b_g, fg=self.f_g).place(x=315, y=936)
+        self.solve_elapsed_time(elapsed_time)
 
         if not solved: 
-            solve_image_failed(b_g, f_g, elapsed_time, window)
+            solve_image_failed(b_g, f_g)
             return
         logging.debug(f"Found star is {self.offset_data.offset_star_name}")
         if self.offset_data.offset_star_name == "":
@@ -910,8 +919,6 @@ class EFinderGUI():
         self.box_write("solved")
         self.deltaCalcGUI()
         self.readTarget()
-        # deltacalcgui?
-        # readTarget
         logging.debug("Solve done")
 
     def goto(self):
@@ -1075,7 +1082,6 @@ class EFinderGUI():
 
     def readTarget(self):
         """ read from nexus if there's a target set """
-        logging.debug("TODO readTarget")
         goto_ra = self.nexus.get(":Gr#")
         goto_dec = self.nexus.get(":Gd#")
         if (
@@ -1085,7 +1091,7 @@ class EFinderGUI():
             return
         ra = goto_ra.split(":")
         dec = re.split(r"[:*]", goto_dec)
-        logging.info(f"goto RA & Dec {goto_ra=} {goto_dec=}")
+        logging.info(f"GoTo target: {goto_ra=} {goto_dec=}")
         goto_radec = (
             float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
         ), math.copysign(
@@ -1156,7 +1162,6 @@ class EFinderGUI():
         )
 
 
-
     def box_write(self, new_line):
         t = self.ts.now()
         for i in range(5, 0, -1):
@@ -1168,11 +1173,8 @@ class EFinderGUI():
                 x=1050, y=980 - i * 16)
 
     def deltaCalcGUI(self):
-        # global deltaAz, deltaAlt, solved_altaz
-        self.astro_data.deltaAz, self.astro_data.deltaAlt = self.common.deltaCalc(
-            self.nexus.get_altAz(), self.astro_data.solved_altaz,
-            self.nexus.get_scope_alt(), self.astro_data.deltaAz,
-            self.astro_data.deltaAlt)
+        """ do the core delta calc, then update GUI """
+        self.efinder.deltaCalc()
         deltaAzstr = "{: .1f}".format(float(self.astro_data.deltaAz)).ljust(8)[:8]
         deltaAltstr = "{: .1f}".format(float(self.astro_data.deltaAlt)).ljust(8)[:8]
         tk.Label(self.window, width=10, anchor="e", text=deltaAzstr,

@@ -19,7 +19,7 @@ import math
 from PIL import Image
 import psutil
 import threading
-import logging
+
 from pathlib import Path
 import fitsio
 from Coordinates import Coordinates
@@ -28,6 +28,7 @@ from common import Common, ParamData
 from handpad import HandPad
 from common import CameraData, CLIData, AstroData, OffsetData
 from typing import Dict
+import logging
 
 
 class EFinder():
@@ -56,46 +57,55 @@ class EFinder():
         scan.daemon = True
         scan.start()
 
-    def align(self, nexus, offset_flag=False):
-        # global align_count, solve, sync_count, param, offset_flag, arr
-        output = self.handpad.display
-        nexus_ra, nexus_dec, is_aligned, _ = nexus.read_altAz()
-        self.handpad.set_lines(self.handpad.nex_pos,
-                               f"Nex: RA {nexus_ra}", f"   Dec {nexus_dec}", None)
-        if is_aligned:
-            self.handpad.set_lines(self.handpad.aligns_pos,
-                                   "'Select' syncs",
-                                   "Nexus is aligned", None)
+    def align(self, offset_flag=False, show_image=True):
+        try:
+            output = self.handpad.display
+            nexus = self.astro_data.nexus
+            nexus_ra, nexus_dec, is_aligned, _ = nexus.read_altAz()
+            self.handpad.set_lines(self.handpad.nex_pos,
+                                   f"Nex: RA {nexus_ra}", f"   Dec {nexus_dec}", None)
+            if is_aligned:
+                self.handpad.set_lines(self.handpad.aligns_pos,
+                                       "'Select' syncs",
+                                       "Nexus is aligned", None)
 
-        self.capture(offset_flag)
-        self.imgDisplay()
-        self.solveImage(offset_flag)
-        cmd = self.handpad.get_current_cmd()
-        if not self.astro_data.solved:
-            output.display(cmd.line1, "Solved Failed", cmd.line3)
-            return
-        align_ra = ":Sr" + \
-            self.coordinates.dd2dms((self.astro_data.solved_radec)[0]) + "#"
-        align_dec = ":Sd" + \
-            self.coordinates.dd2aligndms(
-                (self.astro_data.solved_radec)[1]) + "#"
-        nexus_response = nexus.get(align_ra)
-        logging.info(align_ra)
-        if nexus_response == "0":
-            logging.info("invalid position")
-            output.display(cmd.line1, "Invalid position", cmd.line3)
-            return
-        nexus_response = nexus.get(align_dec)
-        logging.info(align_dec)
-        if nexus_response == "0":
-            logging.info("invalid position")
-            output.display(cmd.line1, "Invalid position", cmd.line3)
-            return
-        reply = nexus.get(":CM#")
-        logging.info(f"reply: {reply}")
-        p = nexus.get(":GW#")
-        logging.info(f"Align status reply: {p}")
-        self.astro_data.align_count += 1
+            self.capture(offset_flag)
+            if show_image:
+                self.imgDisplay()
+            self.solveImage(offset_flag)
+            cmd = self.handpad.get_current_cmd()
+            if not self.astro_data.solved:
+                output.display(cmd.line1, "Solved Failed", cmd.line3)
+                return
+            align_ra = ":Sr" + \
+                self.coordinates.dd2dms((self.astro_data.solved_radec)[0]) + "#"
+            align_dec = ":Sd" + \
+                self.coordinates.dd2aligndms(
+                    (self.astro_data.solved_radec)[1]) + "#"
+            nexus_response = nexus.get(align_ra)
+            logging.info(align_ra)
+            if nexus_response == "0":
+                msg = "Invalid position"
+                logging.info(msg)
+                output.display(cmd.line1, msg, cmd.line3)
+                return [msg]
+            nexus_response = nexus.get(align_dec)
+            logging.info(align_dec)
+            if nexus_response == "0":
+                msg = "Invalid position"
+                logging.info(msg)
+                output.display(cmd.line1, msg, cmd.line3)
+                return [msg]
+            reply = nexus.get(":CM#")
+            msg = [f"Sent :CM#, {reply=}"]
+            logging.info(msg[0])
+            p = nexus.get(":GW#")
+            msg.append(f"Align status reply={p}")
+            logging.info(msg[1])
+            self.astro_data.align_count += 1
+        except Exception as ex:
+            logging.error(ex)
+            return "Nexus error"
         if p != "AT2":
             output.display(
                 "'select' aligns",
@@ -111,7 +121,7 @@ class EFinder():
                     "Nexus reply " + p[0:3],
                 )
                 self.astro_data.nexus.set_aligned(True)
-        return
+        return msg
 
     def capture(self, offset_flag=False, extras={}):
         if self.param.test_mode == "1":
@@ -126,7 +136,6 @@ class EFinder():
             radec,
             extras
         )
-        # TODO call gui.image_show
 
     def imgDisplay(self):  # displays the captured image on the Pi desktop.
         for proc in psutil.process_iter():
@@ -166,22 +175,22 @@ class EFinder():
                                self.coordinates.dd2dms(solved_radec[1]),
                                "time: " + str(elapsed_time)[0:4] + " s"
                                )
-        self.deltaCalc(elapsed_time)
-        return True, elapsed_time
-
-
-    def deltaCalc(self, elapsed_time):
-        deltaAz, deltaAlt = self.common.deltaCalc(
-            self.astro_data.nexus.get_altAz(), self.astro_data.solved_altaz,
-            self.astro_data.nexus.get_scope_alt(), self.astro_data.deltaAz,
-            self.astro_data.deltaAlt)
-        deltaXstr = "{: .2f}".format(float(deltaAz))
-        deltaYstr = "{: .2f}".format(float(deltaAlt))
+        self.deltaCalc()
+        deltaXstr = "{: .2f}".format(float(self.astro_data.deltaAz))
+        deltaYstr = "{: .2f}".format(float(self.astro_data.deltaAlt))
         self.handpad.set_lines(self.handpad.delta_pos,
                                "Delta: x= " + deltaXstr,
                                "       y= " + deltaYstr,
                                "time: " + str(elapsed_time)[0:4] + " s"
                                )
+        return True, elapsed_time
+
+
+    def deltaCalc(self):
+        self.astro_data.deltaAz, self.astro_data.deltaAlt = self.common.deltaCalc(
+            self.astro_data.nexus.get_altAz(), self.astro_data.solved_altaz,
+            self.astro_data.nexus.get_scope_alt(), self.astro_data.deltaAz,
+            self.astro_data.deltaAlt)
 
     def measure_offset(self):
         output = self.handpad.display
