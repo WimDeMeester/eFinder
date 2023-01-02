@@ -57,7 +57,8 @@ class EFinder():
         scan.daemon = True
         scan.start()
 
-    def align(self, offset_flag=False, show_image=True):
+    
+    def align(self, offset_flag=False):
         try:
             output = self.handpad.display
             nexus = self.astro_data.nexus
@@ -70,9 +71,8 @@ class EFinder():
                                        "Nexus is aligned", None)
 
             self.capture(offset_flag)
-            if show_image:
-                self.imgDisplay()
-            self.solveImage(calc_offset=offset_flag)
+            self.imgDisplay()
+            self.solveImage(offset_flag)
             cmd = self.handpad.get_current_cmd()
             if not self.astro_data.solved:
                 output.display(cmd.line1, "Solved Failed", cmd.line3)
@@ -121,6 +121,7 @@ class EFinder():
                     "Nexus reply " + p[0:3],
                 )
                 self.astro_data.nexus.set_aligned(True)
+        logging.debug(f"Align returning {msg=}, {p=}")
         return msg, p
 
     def capture(self, offset_flag=False, extras={}):
@@ -206,11 +207,14 @@ class EFinder():
             EFinder.save_param(self.cwd_path, self.param)
 
     def measure_offset(self, set_offset=True):
-        """ measures the offset wrt a known star in the platesolved field """
+        """ measures the offset wrt a known star in the platesolved field 
+        set_offset means that the offset will be set and saved in the params.
+
+        """
         output = self.handpad.display
-        calc_offset = True
+        offset_flag = True
         output.display("started capture", "", "")
-        self.capture(calc_offset)
+        self.capture(offset_flag)
         self.imgDisplay()
         _, has_star, star_name, _ = self.solveImage(offset_flag=True)
         if not self.astro_data.solved:

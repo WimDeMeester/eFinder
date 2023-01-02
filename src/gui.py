@@ -906,7 +906,7 @@ class EFinderGUI():
         return img.resize((w, h), Image.LANCZOS)
 
     def align(self):
-        msg, p = self.efinder.align(show_image=False)
+        msg, p = self.efinder.align()
         for message in msg:
             # show messages
             self.box_write(message)
