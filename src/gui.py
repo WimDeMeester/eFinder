@@ -294,11 +294,35 @@ class EFinderGUI():
         self.lbl_date.config(text=t.utc_strftime("%d %b %Y"))
         self.lbl_LST.after(1000, self.sidereal)
 
-# TODO the offset methods:
+    # the offset methods:
+
+    def measure_offset(self):
+        """ Uses core measure offset but does some GUI stuff + allows measuring
+        the offset without immediately setting it.
+        """
+        # logging.debug(f"Starting measure_offset for star name: {self.offset_data.star_name}")
+        success, d_x, d_y, dxstr, dystr, has_star, star_name = self.efinder.measure_offset(set_offset=False)
+
+        if not success:
+            self.box_write("solve failed", True)
+            logging.debug("solve failed")
+            return
+
+        if star_name == "":  # display warning in red.
+            tk.Label(self.window, width=8, text=star_name, anchor="w", bg=self.f_g, fg=self.b_g).place(
+                x=115, y=470
+            )
+        else:
+            tk.Label(self.window, width=8, text=star_name, anchor="w", bg=self.b_g, fg=self.f_g).place(
+                x=115, y=470
+            )
+        self.offset_data.offset_new =  d_x, d_y
+        logging.debug(f"measure_offset stored: {self.offset_data.offset_new=}")
+        self.box_write(star_name)
+        self.tk_label(text=f"{dxstr}, {dystr}", width=9, anchor="w", x=110, y=450)
 
     def save_offset(self):
-        self.param.d_x, self.param.d_y = offset
-        self.efinder.save_param(self.efinder.cwd_path, self.param)
+        self.efinder.save_offset(*self.offset_data.offset)
         self.get_offset()
         self.box_write("offset saved")
 
@@ -306,41 +330,44 @@ class EFinderGUI():
         x_offset_saved, y_offset_saved, dxstr_saved, dystr_saved = self.common.dxdy2pixel(
             float(self.param.d_x), float(self.param.d_y)
         )
-        tk.Label(
-            self.window,
-            text=dxstr_saved + "," + dystr_saved + "          ",
-            width=9,
-            anchor="w",
-            bg=self.b_g,
-            fg=self.f_g,
-        ).place(x=110, y=520)
+        self.tk_label(text=dxstr_saved + "," + dystr_saved, width=9, anchor="w", x=110, y=520)
 
     def use_saved_offset(self):
-        global offset
         x_offset_saved, y_offset_saved, dxstr, dystr = self.common.dxdy2pixel(
             float(self.param.d_x), float(self.param.d_y)
         )
-        offset = float(self.param.d_x), float(self.param.d_y)
+        self.offset_data.offset = float(self.param.d_x), float(self.param.d_y)
+        self.tk_label(text=dxstr + "," + dystr, width=20, x=60, y=400)
+
+    def tk_label(self, text, width, x, y, b_g=None, f_g=None, anchor="CENTER", clear: bool=False):
+        if b_g is None:
+            b_g = self.b_g
+        if f_g is None:
+            f_g = self.f_g
+        if clear:
+            tk.Label(self.window, anchor=anchor, text=" "*width, bg=b_g, fg=f_g, width=width).place(
+                x=x, y=y
+            )
+
+        tk.Label(self.window, text=text, bg=b_g, fg=f_g, width=width).place(
+            x=x, y=y
+        )
+
+    def use_new_offset(self):
+        self.offset_data.offset = self.offset_data.offset_new
+        x_offset_new, y_offset_new, dxstr, dystr = self.common.dxdy2pixel(
+            self.offset_data.offset[0], self.offset_data.offset[1])
+
         tk.Label(self.window, text=dxstr + "," + dystr, bg=self.b_g, fg=self.f_g, width=8).place(
             x=60, y=400
         )
 
-    def use_new_offset(self):
-        global offset, offset_new
-        offset = offset_new
-        x_offset_new, y_offset_new, dxstr, dystr = self.common.dxdy2pixel(
-            offset[0], offset[1])
-        tk.Label(self.window, text=dxstr + "," + dystr, bg=b_g, fg=f_g, width=8).place(
-            x=60, y=400
-        )
-
     def reset_offset(self):
-        global offset
-        offset = offset_reset
-        eFinderGUI.box_write("offset reset", True)
-        tk.Label(self.window, text="0,0", bg=b_g,
+        self.offset_data.offset = self.offset_data.offset_reset
+        self.box_write("offset reset")
+        tk.Label(self.window, text="0,0", bg=self.b_g,
                  fg="red", width=8).place(x=60, y=400)
-###########################################
+
 
     def draw_screen(self, NexStr):
         b_g = self.b_g
@@ -353,8 +380,7 @@ class EFinderGUI():
             self.window,
             width=18,
             anchor="w",
-            text=str(self.nexus.get_long()) + "\u00b0  " +
-            str(self.nexus.get_lat()) + "\u00b0",
+            text=str(self.nexus.get_long()) + "\u00b0  " + str(self.nexus.get_lat()) + "\u00b0",
             bg=b_g,
             fg=f_g,
         ).place(x=55, y=66)
@@ -907,17 +933,17 @@ class EFinderGUI():
         self.image_show()
 
     def solve(self):
-        solved, elapsed_time = self.efinder.solveImage()
+        solved, has_star, star_name, elapsed_time = self.efinder.solveImage()
         self.show_elapsed_time(elapsed_time)
 
         if not solved: 
             solve_image_failed(b_g, f_g)
             return
-        logging.debug(f"Found star is {self.offset_data.offset_star_name}")
-        if self.offset_data.offset_star_name == "":
+        logging.debug(f"Found star is {star_name}")
+        if star_name == "":
             self.box_write(" no named star")
         else:
-            self.box_write(self.offset_data.offset_star_name.star_name + " found")
+            self.box_write(f"{star_name} found")
         self.box_write("solved")
         self.deltaCalcGUI()
         self.readTarget()
@@ -1078,10 +1104,7 @@ class EFinderGUI():
             self.box_write("solve failure")
             return
 
-
-    def measure_offset(self):
-        logging.debug("TODO measure_offset")
-
+    
     def readTarget(self):
         """ read from nexus if there's a target set """
         goto_ra = self.nexus.get(":Gr#")

@@ -72,7 +72,7 @@ class EFinder():
             self.capture(offset_flag)
             if show_image:
                 self.imgDisplay()
-            self.solveImage(offset_flag)
+            self.solveImage(calc_offset=offset_flag)
             cmd = self.handpad.get_current_cmd()
             if not self.astro_data.solved:
                 output.display(cmd.line1, "Solved Failed", cmd.line3)
@@ -138,6 +138,8 @@ class EFinder():
         )
 
     def imgDisplay(self):  # displays the captured image on the Pi desktop.
+        if self.cli_data.has_gui:
+            return
         for proc in psutil.process_iter():
             if proc.name() == "display":
                 proc.kill()  # delete any previous image display
@@ -154,11 +156,10 @@ class EFinder():
         if not has_solved:
             logging.info("Bad Luck - Solve Failed")
             output.display("Not Solved", "", "")
-            return False, 0
+            return False, False, "", 0
+
         if offset_flag and has_star:
-            table, _ = fitsio.read(self.cwd_path / "capture.axy", header=True)
-            self.offset_data.offset = table[0][0], table[0][1]
-            self.offset_data.offset_star_name = star_name
+            self.set_offset(star_name)
         solvedPos = self.common.applyOffset(self.astro_data.nexus,
                                             self.offset_data.offset)
         ra, dec, d = solvedPos.apparent().radec(self.coordinates.get_ts().now())
@@ -183,7 +184,7 @@ class EFinder():
                                "       y= " + deltaYstr,
                                "time: " + str(elapsed_time)[0:4] + " s"
                                )
-        return True, elapsed_time
+        return has_solved, has_star, star_name, elapsed_time
 
 
     def deltaCalc(self):
@@ -192,30 +193,44 @@ class EFinder():
             self.astro_data.nexus.get_scope_alt(), self.astro_data.deltaAz,
             self.astro_data.deltaAlt)
 
-    def measure_offset(self):
+    def set_offset(self, star_name):
+        """ After a succesfull solve, store offset and offset star name """
+        table, _ = fitsio.read(self.cli_data.images_path / "capture.axy", header=True)
+        self.offset_data.star_name_offset = table[0][0], table[0][1]
+        self.offset_data.star_name = star_name
+
+    def save_offset(self, d_x, d_y):
+            self.param.d_x = d_x
+            self.param.d_y = d_y
+            self.offset_data.offset = d_x, d_y
+            EFinder.save_param(self.cwd_path, self.param)
+
+    def measure_offset(self, set_offset=True):
+        """ measures the offset wrt a known star in the platesolved field """
         output = self.handpad.display
-        offset_flag = True
+        calc_offset = True
         output.display("started capture", "", "")
-        self.capture(offset_flag)
+        self.capture(calc_offset)
         self.imgDisplay()
-        self.solveImage(offset_flag)
+        _, has_star, star_name, _ = self.solveImage(offset_flag=True)
         if not self.astro_data.solved:
             output.display("solve failed", "", "")
-            return
-        scope_x = self.offset_data.offset[0]
-        scope_y = self.offset_data.offset[1]
+            return False
+        scope_x = self.offset_data.star_name_offset[0]
+        scope_y = self.offset_data.star_name_offset[1]
         d_x, d_y, dxstr, dystr = self.common.pixel2dxdy(scope_x, scope_y)
-        self.param.d_x = d_x
-        self.param.d_y = d_y
-        EFinder.save_param(self.cwd_path, self.param)
-        self.offset_data.offset_str = dxstr + "," + dystr
+        if set_offset:
+            self.save_offset(d_x, d_y)
+        self.offset_data.offset_str = f"{dxstr},{dystr}"
+        logging.debug(f"measure_offset: (dx,dy)={self.offset_data.offset_str}")
         self.handpad.set_lines(self.handpad.polar_pos,
                                None, f"new {self.offset_data.offset_str}", None)
         self.handpad.set_lines(self.handpad.reset_pos,
                                None, f"new {self.offset_data.offset_str}", None)
         cmd = self.handpad.get_cmd(self.handpad.polar_pos)
         output.display(cmd.line1, cmd.line2,
-                       f"{self.offset_data.offset_star_name} found")
+                       f"{self.offset_data.star_name} found")
+        return True, d_x, d_y, dxstr, dystr, has_star, star_name
 
     def go_solve(self):
         output = self.handpad.display

@@ -109,7 +109,8 @@ class AstroData:
 @dataclass
 class OffsetData:
     """Class for keeping track of offset values"""
-    offset_star_name: str = ""
+    star_name: str = ""
+    star_name_offset: Tuple[float, float] = (0.0, 0.0)
     offset: Tuple[float, float] = (0.0, 0.0)
     offset_new: Tuple[float, float] = (0.0, 0.0)
     offset_saved: Tuple[float, float] = (0.0, 0.0)
