@@ -64,6 +64,8 @@ class SerialOutput(Output):
             sys.exit()
 
     def display(self, line0: str, line1: str, line2: str) -> None:
+        if line1 == None:
+            line1 = ''
         self.box.write(bytes(("0:" + line0 + "\n").encode("UTF-8")))
         self.box.write(bytes(("1:" + line1 + "\n").encode("UTF-8")))
         self.box.write(bytes(("2:" + line2 + "\n").encode("UTF-8")))

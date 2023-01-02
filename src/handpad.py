@@ -10,7 +10,7 @@ Pos = namedtuple('Pos', ['x', 'y'])
 
 
 class Commands:
-    def __init__(self, name, line1, line2, line3, up, down, left, right, 
+    def __init__(self, name, line1, line2, line3, up, down, left, right,
                  select, longselect):
         self.name = name
         self.line1 = line1
@@ -161,17 +161,19 @@ class HandPad():
         self.param = param
         self.offset_str = offset_str
         self.nexus_tuple = nexus_tuple
-        if button == DisplayButtons.BTN_SELECT:
+
+        button = int(button)
+        if button == DisplayButtons.BTN_SELECT.value:
             return self.get(self.pos).select
-        elif button == DisplayButtons.BTN_LONGSELECT:
+        elif button == DisplayButtons.BTN_LONGSELECT.value:
             return self.get(self.pos).longselect
-        elif button == DisplayButtons.BTN_UP:
+        elif button == DisplayButtons.BTN_UP.value:
             exec(self.get(self.pos).up)
-        elif button == DisplayButtons.BTN_DOWN:
+        elif button == DisplayButtons.BTN_DOWN.value:
             exec(self.get(self.pos).down)
-        elif button == DisplayButtons.BTN_LEFT:
+        elif button == DisplayButtons.BTN_LEFT.value:
             exec(self.get(self.pos).left)
-        elif button == DisplayButtons.BTN_RIGHT:
+        elif button == DisplayButtons.BTN_RIGHT.value:
             exec(self.get(self.pos).right)
 
     # array determines what is displayed, computed and what each button does for each screen.
