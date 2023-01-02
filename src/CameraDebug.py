@@ -25,6 +25,9 @@ class CameraDebug(CameraInterface):
         exposure_time (float): The exposure time in seconds
         gain (float): The gain
         radec (str)"""
+        capture_test_image(extras)
+
+    def capture_test_image(self, extras: Dict) -> None:
         if 'testimage' not in extras:
             logging.warning("No debug image was selected, choosing polaris")
             self.copy_polaris()

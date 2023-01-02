@@ -928,6 +928,7 @@ class EFinderGUI():
             extras['testimage'] = "polaris"
         elif self.m31.get() == "1":
             extras['testimage'] = "m31"
+        logging.debug(f"Calling capture with {extras=}")
 
         self.efinder.capture(extras=extras)
         self.image_show()
@@ -949,8 +950,18 @@ class EFinderGUI():
         self.readTarget()
         logging.debug("Solve done")
 
+    # TODO
     def goto(self):
-        logging.debug("TODO goto")
+        self.readTarget()  # reads goto_ra and goto_dec
+        self.efinder.align()  # local sync scope to true RA & Dec
+        if solved == False:
+            eFinderGUI.box_write("solve failed", True)
+            return
+        self.astro_data.nexus.write(":Sr" + goto_ra + "#")
+        self.astro_data.nexus.write(":Sd" + goto_dec + "#")
+        reply = self.astro_data.nexus.get(":MS#")
+        time.sleep(0.1)
+        self.box_write("moving scope", True)
 
     # UI only method
     def move(self):

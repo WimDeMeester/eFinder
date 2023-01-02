@@ -29,6 +29,7 @@ from handpad import HandPad
 from common import CameraData, CLIData, AstroData, OffsetData
 from typing import Dict
 import logging
+from CameraDebug import CameraDebug
 
 
 class EFinder():
@@ -53,6 +54,7 @@ class EFinder():
             float(self.param.d_x), float(self.param.d_y)
         )
         self.offset_data.offset_str = dxstr + "," + dystr
+        self.camera_debug = CameraDebug(handpad, self.cli_data.images_path)
         scan = threading.Thread(target=self.reader)
         scan.daemon = True
         scan.start()
@@ -125,18 +127,22 @@ class EFinder():
         return msg, p
 
     def capture(self, offset_flag=False, extras={}):
+        # setting test images for headless usage
         if self.param.test_mode == "1":
             if offset_flag:
                 extras['testimage'] = 'polaris'
             else:
                 extras['testimage'] = 'm31'
-        radec = self.astro_data.nexus.get_short()
-        self.camera_data.camera.capture(
-            int(float(self.param.exposure) * 1000000),
-            int(float(self.param.gain)),
-            radec,
-            extras
-        )
+        if 'testimage' in extras:
+            self.camera_debug.capture_test_image(extras)
+        else:
+            radec = self.astro_data.nexus.get_short()
+            self.camera_data.camera.capture(
+                int(float(self.param.exposure) * 1000000),
+                int(float(self.param.gain)),
+                radec,
+                extras
+            )
 
     def imgDisplay(self):  # displays the captured image on the Pi desktop.
         if self.cli_data.has_gui:
