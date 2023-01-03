@@ -43,8 +43,8 @@ class HandPad:
             line3="ver" + version,
             up="",
             down="self.up_down(1)",
-            left="self.left_right(1)",
-            right="",
+            left="",
+            right="self.left_right(1)",
             select="self.go_solve()",
             longselect="",
         )
