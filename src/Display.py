@@ -22,7 +22,7 @@ class DisplayButtons(Enum):
     DO_DOWN = 4
 
 
-class Output():
+class Output:
     def display(self, line0: str, line1: str, line2: str) -> None:
         """Display the three lines on the display
 
@@ -64,31 +64,36 @@ class SerialOutput(Output):
             sys.exit()
 
     def display(self, line0: str, line1: str, line2: str) -> None:
-        if line1 == None:
-            line1 = ''
+        if line1 is None:
+            line1 = ""
         self.box.write(bytes(("0:" + line0 + "\n").encode("UTF-8")))
         self.box.write(bytes(("1:" + line1 + "\n").encode("UTF-8")))
         self.box.write(bytes(("2:" + line2 + "\n").encode("UTF-8")))
 
     def get_button_press(self):
         if self.box in select.select([self.box], [], [], 0)[0]:
-            return self.box.readline().decode("ascii").strip("\r\n")
+            return DisplayButtons(
+                int(self.box.readline().decode("ascii").strip("\r\n"))
+            )
 
 
 class PrintOutput(Output):
     nr_chars = 20
     mapping: Dict = dict()
 
-    def __init__(self, mapping_mode='arrows') -> None:
+    def __init__(self, mapping_mode="arrows") -> None:
         self.header, header_dashes = self._create_headings(
-            self.nr_chars, 'Handpad start')
+            self.nr_chars, "Handpad start"
+        )
         self.footer, _ = self._create_headings(
-            self.nr_chars, 'Handpad stop', header_dashes)
+            self.nr_chars, "Handpad stop", header_dashes
+        )
         self._create_mapping(mapping_mode)
 
     def _create_headings(self, nr_chars, text, header_dashes=None):
-        dashes = int((nr_chars-len(text)) /
-                     2) if header_dashes is None else header_dashes
+        dashes = (
+            int((nr_chars - len(text)) / 2) if header_dashes is None else header_dashes
+        )
         return f"{dashes*'-'}{text}{(nr_chars-dashes-len(text))*'-'}\n", dashes
 
     def display(self, line0: str, line1: str, line2: str) -> None:
@@ -96,7 +101,7 @@ class PrintOutput(Output):
         print(f"{self.header}{line0}\n{line1}\n{line2}\n{self.footer}")
 
     def get_button_press(self):
-        with Input(keynames='curses') as input_generator:
+        with Input(keynames="curses") as input_generator:
             res = input_generator.send(None)
         if res in self.mapping:
             return self.mapping[res]
@@ -105,29 +110,35 @@ class PrintOutput(Output):
         return None
 
     def _create_mapping(self, mapping_mode):
-        if mapping_mode == 'arrows':
+        if mapping_mode == "arrows":
             self.mapping = {
-                'KEY_LEFT': DisplayButtons.BTN_LEFT,
-                'KEY_RIGHT': DisplayButtons.BTN_RIGHT,
-                'KEY_UP': DisplayButtons.BTN_UP,
-                'KEY_DOWN': DisplayButtons.BTN_DOWN,
-                ' ': DisplayButtons.BTN_SELECT,
-                '\n': DisplayButtons.BTN_LONGSELECT}
+                "KEY_LEFT": DisplayButtons.BTN_LEFT,
+                "KEY_RIGHT": DisplayButtons.BTN_RIGHT,
+                "KEY_UP": DisplayButtons.BTN_UP,
+                "KEY_DOWN": DisplayButtons.BTN_DOWN,
+                " ": DisplayButtons.BTN_SELECT,
+                "\n": DisplayButtons.BTN_LONGSELECT,
+            }
             logging.info(
-                "Navigate the handpad using arrow keys, space (select) and enter (long press select)")
-        elif mapping_mode == 'dvorak':
-            self.mapping = {'a': DisplayButtons.BTN_LEFT,
-                            'e': DisplayButtons.BTN_RIGHT,
-                            ',': DisplayButtons.BTN_UP,
-                            'o': DisplayButtons.BTN_DOWN,
-                            "'": DisplayButtons.BTN_SELECT,
-                            '.': DisplayButtons.BTN_LONGSELECT}
+                "Navigate the handpad using arrow keys, space (select) and enter (long press select)"
+            )
+        elif mapping_mode == "dvorak":
+            self.mapping = {
+                "a": DisplayButtons.BTN_LEFT,
+                "e": DisplayButtons.BTN_RIGHT,
+                ",": DisplayButtons.BTN_UP,
+                "o": DisplayButtons.BTN_DOWN,
+                "'": DisplayButtons.BTN_SELECT,
+                ".": DisplayButtons.BTN_LONGSELECT,
+            }
             logging.info(
-                "Navigate the handpad using a (left), e (right), ',' (up), o (down), ' (select), . (long press select)")
+                "Navigate the handpad using a (left), e (right), ',' (up), o (down), ' (select), . (long press select)"
+            )
 
 
 class Display(Output):
     """All methods to work with the handpad"""
+
     output: Output
 
     def __init__(self, output: Output) -> None:
