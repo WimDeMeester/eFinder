@@ -158,5 +158,5 @@ if __name__ == "__main__":
 
     cli_data = CLIData(
         not args.fakehandpad, not args.fakecamera, not args.fakenexus,
-        images_path, args.hasgui, [], [])
+        images_path, args.hasgui)
     main(cli_data)

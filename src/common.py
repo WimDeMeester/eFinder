@@ -4,10 +4,12 @@ from CameraInterface import CameraInterface
 from skyfield.api import load, Star
 import math
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Tuple
 from NexusInterface import NexusInterface
+import logging
 
+from attrs import asdict, define, make_class, Factory
 
 @dataclass
 class CameraData:
@@ -28,66 +30,57 @@ class CLIData:
     real_nexus: bool
     images_path: Path
     has_gui: bool
-    exp_range: List
-    gain_range: List
 
 
-@dataclass
+@define
 class ParamData:
     """Class for keeping track of the parameters read from file.
     TODO: could use some 3rd party library to avoid having to enumerate
     all options.
     """
-    exposure: float
-    gain: float
-    exposure_range: List[str]
-    gain_range: List[str]
-    test_mode: bool
-    camera_type: str
-    d_x: float
-    d_y: float
-    alt_speed: float
-    az_speed: float
-    default_eyepiece: str
-    default_focal_length: float
-    scope_focal_length: float
-    eyepiece1: str 
-    eyepiece2: str
-    eyepiece3: str
-    eyepiece4: str
+    exposure: float = 1
+    gain: float = 1
+    exp_range: list[str] = Factory(list)
+    gain_range: list[str] = Factory(list) 
+    test_mode: bool = False
+    camera_type: str = ""
+    d_x: float = 0
+    d_y: float = 0
+    altspeed: float = 0
+    azspeed: float = 0
+    default_eyepiece: float = 0
+    default_focal_length: float = 0
+    scope_focal_length: float = 0
+    eyepiece1: str = ""
+    eyepiece2: str = ""
+    eyepiece3: str = ""
+    eyepiece4: str = ""
 
-    mapping = {"Exposure": "exposure", "Gain": "gain",
-               "Exp_range": "exposure_range",
-               "Gain_range": "gain_range",
-               "Test mode": "test_mode",
-               "Camera Type": "camera_type",
-               "d_x": "d_x", "d_y": "d_y", "altSpeed": "alt_speed",
-               "azSpeed": "az_speed", "default_eyepiece": "default_eyepiece",
-               "default_focal_length": "default_focal_length",
-               "scope_focal_length": "scope_focal_length",
-               "Eyepiece1": "eyepiece1",
-               "Eyepiece2": "eyepiece2",
-               "Eyepiece3": "eyepiece3",
-               "Eyepiece4": "eyepiece4",
-               }
 
     def __init__(self, param):
         # check that there are no unknown entries in the param dict
+        logging.debug(f"all attrs is {dir(self)}")
         for key in param:
-            if key not in self.mapping.keys() and key[0] != "#":
-                raise ValueError("Unknown parameter: {}".format(key))
+            logging.debug(f"Key = {key}, {key.lower()}")
+            logging.debug(f"{hasattr(self, key.lower())}")
+            logging.debug(f"{key.lower()=}, {param[key]=}")
+            if key.lower() not in dir(self) and key[0] != "#":
+                raise ValueError(f"Unknown parameter: {key}")
+            else:
+                # import code; code.interact(local=locals())
+                setattr(self, key.lower(), param[key])
+        self.__attrs_init__()
 
-        for entry in self.mapping.keys():
-            if entry in param:
-                setattr(self, self.mapping[entry], param[entry])
+    @classmethod
+    def from_param(cls, param):
+        """Create a ParamData object from a dict"""
+        return cls(**param)
+
 
     def get_dict(self):
-        """Return a dict with the parameters if present """
-        param = {}
-        for entry in self.mapping.keys():
-            if hasattr(self, self.mapping[entry]):
-                param[entry] = getattr(self, self.mapping[entry])
-        return param
+         """Return a dict with the parameters if present """
+         # import code; code.interact(local=locals())
+         return asdict(self)
 
     def __str__(self):
         return str(self.get_dict())
@@ -101,6 +94,8 @@ class AstroData:
     deltaAlt: float = 0
     align_count: int = 0
     sync_count: int = 0
+    goto_ra: float = 0
+    goto_dec: float = 0
     solved: bool = False
     solved_radec: Tuple[float, float] = 0, 0
     solved_altaz: Tuple[float, float] = 0, 0

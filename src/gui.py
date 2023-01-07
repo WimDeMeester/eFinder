@@ -397,7 +397,7 @@ class EFinderGUI():
         exp_frame.place(x=0, y=100)
         tk.Label(exp_frame, text="Exposure", bg=b_g,
                  fg=f_g).pack(padx=1, pady=1)
-        expRange = self.cli_data.exp_range
+        expRange = self.param.exp_range
         for i in range(len(expRange)):
             tk.Radiobutton(
                 exp_frame,
@@ -417,7 +417,7 @@ class EFinderGUI():
         gain_frame = Frame(self.window, bg="black")
         gain_frame.place(x=80, y=100)
         tk.Label(gain_frame, text="Gain", bg=b_g, fg=f_g).pack(padx=1, pady=1)
-        gainRange = self.cli_data.gain_range
+        gainRange = self.param.gain_range
         for i in range(len(gainRange)):
             tk.Radiobutton(
                 gain_frame,

@@ -17,6 +17,7 @@ pyserial = "^3.5"
 zwoasi = "^0.1.0.1"
 argparse = "^1.4.0"
 curtsies = "^0.4.1"
+attrs = "^22.2.0"
 
 [build-system]
 requires = ["poetry-core"]

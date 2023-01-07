@@ -5,7 +5,6 @@ import logging
 from typing import Dict
 from common import ParamData
 
-
 Pos = namedtuple("Pos", ["x", "y"])
 
 
@@ -35,6 +34,7 @@ class HandPad:
         self.display = output
         self.p = ""  # TODO needs to be updated
         self.param = param
+        logging.debug(f"Handpad init with {param=}")
 
         self.home = Commands(
             name="home",
@@ -138,7 +138,7 @@ class HandPad:
             line2=self.param.exposure,
             line3="",
             up="self.up_down_inc(1,1)",
-            down="self.up_down_inc(1,-1)",
+            down="self.up_down_inc('exposure', 1,-1)",
             left="self.left_right(-1)",
             right="self.left_right(1)",
             select="self.go_solve()",
@@ -150,7 +150,7 @@ class HandPad:
             line2=self.param.gain,
             line3="",
             up="self.up_down_inc(2,1)",
-            down="self.up_down_inc(2,-1)",
+            down="self.up_down_inc('gain', 2,-1)",
             left="self.left_right(-1)",
             right="self.left_right(1)",
             select="self.go_solve()",
