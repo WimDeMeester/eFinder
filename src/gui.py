@@ -894,7 +894,7 @@ class EFinderGUI():
         self.window.mainloop()
 
     def on_closing(self):
-        self.efinder.save_param(self.efinder.cwd_path, self.param)
+        self.param.save_param()
         self.efinder.handpad.display.display("Program closed", "via VNCGUI", "")
         sys.exit()
 

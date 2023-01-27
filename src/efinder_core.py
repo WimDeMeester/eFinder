@@ -210,7 +210,7 @@ class EFinder():
             self.param.d_x = d_x
             self.param.d_y = d_y
             self.offset_data.offset = d_x, d_y
-            EFinder.save_param(self.cwd_path, self.param)
+            self.param.save_param()
 
     def measure_offset(self, set_offset=True):
         """ measures the offset wrt a known star in the platesolved field 
@@ -294,27 +294,7 @@ class EFinder():
         self.handpad.set_lines(self.handpad.reset_pos, None,
                                f"new {self.offset_data.offset_str}", None)
         self.handpad.display_array()
-        EFinder.save_param(self.cwd_path, self.param)
-
-    @staticmethod
-    def get_param(cwd_path: Path) -> ParamData:
-        param = dict()
-        # global param, self.offset_data.offset_str
-        if os.path.exists(cwd_path / "eFinder.config"):
-            with open(cwd_path / "eFinder.config") as h:
-                for line in h:
-                    line = line.strip("\n").split(":")
-                    param[line[0]] = str(line[1])
-        return ParamData(param)
-
-    @staticmethod
-    def save_param(cwd_path: Path, param_data: ParamData):
-        param = param_data.get_dict()
-        # global param
-        with open(cwd_path / "eFinder.config", "w") as h:
-            for key, value in param.items():
-                # logging.info("%s:%s\n" % (key, value))
-                h.write("%s:%s\n" % (key, value))
+        self.param.save_param()
 
     def reader(self):
         while True:

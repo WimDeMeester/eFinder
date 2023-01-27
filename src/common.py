@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Tuple
 from NexusInterface import NexusInterface
 import logging
+import os
 
 from attrs import asdict, define, make_class, Factory
 
@@ -56,14 +57,17 @@ class ParamData:
     eyepiece3: str = ""
     eyepiece4: str = ""
 
+    # not part of the param data
+    _config_path: str = ""
 
-    def __init__(self, param):
+    def __init__(self, param, config_path):
         # check that there are no unknown entries in the param dict
         logging.debug(f"all attrs is {dir(self)}")
+        setattr(self, "_config_path", config_path)
         for key in param:
-            logging.debug(f"Key = {key}, {key.lower()}")
-            logging.debug(f"{hasattr(self, key.lower())}")
-            logging.debug(f"{key.lower()=}, {param[key]=}")
+            # logging.debug(f"Key = {key}, {key.lower()}")
+            # logging.debug(f"{hasattr(self, key.lower())}")
+            # logging.debug(f"{key.lower()=}, {param[key]=}")
             if key.lower() not in dir(self) and key[0] != "#":
                 raise ValueError(f"Unknown parameter: {key}")
             else:
@@ -76,6 +80,26 @@ class ParamData:
         """Create a ParamData object from a dict"""
         return cls(**param)
 
+
+    @staticmethod
+    def load_param(cwd_path: Path):
+        param = dict()
+        config_path = cwd_path / "eFinder.config"
+        if os.path.exists(config_path):
+            with open(config_path) as h:
+                for line in h:
+                    line = line.strip("\n").split(":")
+                    param[line[0]] = str(line[1])
+        logging.debug(f"Loading params from {config_path}: {param}")
+        return ParamData(param, config_path=config_path)
+
+    def save_param(self):
+        param = self.get_dict()
+        logging.debug(f"Saving params to {self._config_path}: {param}")
+        with open(self._config_path, "w") as h:
+            for key, value in self.get_dict().items():
+                # logging.info("%s:%s\n" % (key, value))
+                h.write("%s:%s\n" % (key, value))
 
     def get_dict(self):
          """Return a dict with the parameters if present """

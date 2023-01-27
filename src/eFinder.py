@@ -39,7 +39,7 @@ def main(cli_data: CLIData):
     logging.info(f"Options are: {cli_data}")
     cwd_path = Path.cwd()
     pix_scale = 15
-    param: ParamData = EFinder.get_param(cwd_path)
+    param: ParamData = ParamData.load_param(cwd_path)
     logging.info(f"Parameters are: {param}")
     output = SerialOutput() if cli_data.real_handpad else PrintOutput()
     handpad = HandPad(output, version_string, param)

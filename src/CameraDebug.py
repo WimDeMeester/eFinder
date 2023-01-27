@@ -36,7 +36,7 @@ class CameraDebug(CameraInterface):
         exposure_time (float): The exposure time in seconds
         gain (float): The gain
         radec (str)"""
-        capture_test_image(extras)
+        self.capture_test_image(extras)
 
 
     def copy_polaris(self):

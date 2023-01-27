@@ -34,7 +34,7 @@ class HandPad:
         self.display = output
         self.p = ""  # TODO needs to be updated
         self.param = param
-        logging.debug(f"Handpad init with {param=}")
+        logging.debug(f"Handpad init")
 
         self.home = Commands(
             name="home",
@@ -279,4 +279,4 @@ class HandPad:
             self.summary_pos
         ).line1 = f"Ex:{str(self.param.exposure)}  Gn:{str(self.param.gain)}"
         self.get(self.summary_pos).line2 = f"Test mode:{str(self.param.test_mode)}"
-        # save_param()
+        self.param.save_param()
