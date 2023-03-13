@@ -35,6 +35,8 @@ version_string = "17_0"
 
 
 # main code starts here
+# This is the main entry for the efinder application, this will also decide
+# if there's a gui involved or not and show accordingly.
 def main(cli_data: CLIData):
     logging.info(f"Options are: {cli_data}")
     cwd_path = Path.cwd()

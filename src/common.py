@@ -9,8 +9,8 @@ from typing import List, Tuple
 from NexusInterface import NexusInterface
 import logging
 import os
+import yaml
 
-from attrs import asdict, define, make_class, Factory
 
 @dataclass
 class CameraData:
@@ -33,47 +33,25 @@ class CLIData:
     has_gui: bool
 
 
-@define
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
 class ParamData:
     """Class for keeping track of the parameters read from file.
     TODO: could use some 3rd party library to avoid having to enumerate
     all options.
     """
-    exposure: float = 1
-    gain: float = 1
-    exp_range: list[str] = Factory(list)
-    gain_range: list[str] = Factory(list) 
-    test_mode: bool = False
-    camera_type: str = ""
-    d_x: float = 0
-    d_y: float = 0
-    altspeed: float = 0
-    azspeed: float = 0
-    default_eyepiece: float = 0
-    default_focal_length: float = 0
-    scope_focal_length: float = 0
-    eyepiece1: str = ""
-    eyepiece2: str = ""
-    eyepiece3: str = ""
-    eyepiece4: str = ""
-
-    # not part of the param data
-    _config_path: str = ""
+    param = None
+    config_path = None
 
     def __init__(self, param, config_path):
         # check that there are no unknown entries in the param dict
-        logging.debug(f"all attrs is {dir(self)}")
-        setattr(self, "_config_path", config_path)
-        for key in param:
-            # logging.debug(f"Key = {key}, {key.lower()}")
-            # logging.debug(f"{hasattr(self, key.lower())}")
-            # logging.debug(f"{key.lower()=}, {param[key]=}")
-            if key.lower() not in dir(self) and key[0] != "#":
-                raise ValueError(f"Unknown parameter: {key}")
-            else:
-                # import code; code.interact(local=locals())
-                setattr(self, key.lower(), param[key])
-        self.__attrs_init__()
+        self.config_path = config_path
+        self.param = dotdict(param)
+        logging.debug(f"Setting params to {self.param}")
 
     @classmethod
     def from_param(cls, param):
@@ -83,32 +61,119 @@ class ParamData:
 
     @staticmethod
     def load_param(cwd_path: Path):
-        param = dict()
         config_path = cwd_path / "eFinder.config"
         if os.path.exists(config_path):
-            with open(config_path) as h:
-                for line in h:
-                    line = line.strip("\n").split(":")
-                    param[line[0]] = str(line[1])
-        logging.debug(f"Loading params from {config_path}: {param}")
+            with open(config_path, "r") as stream:
+                try:
+                    param = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    print(exc)
+            logging.debug(f"Loaded params from {config_path}: {param}")
         return ParamData(param, config_path=config_path)
 
-    def save_param(self):
-        param = self.get_dict()
-        logging.debug(f"Saving params to {self._config_path}: {param}")
-        with open(self._config_path, "w") as h:
-            for key, value in self.get_dict().items():
-                # logging.info("%s:%s\n" % (key, value))
-                h.write("%s:%s\n" % (key, value))
+    def save_param(self, config_path=config_path):
+        if config_path is not None:
+            with open(self.config_path, 'w') as stream:
+                logging.debug("Saving params: {self.param}")
+                yaml.dump(self.param, stream)
+
 
     def get_dict(self):
          """Return a dict with the parameters if present """
          # import code; code.interact(local=locals())
-         return asdict(self)
+         return self.param 
 
     def __str__(self):
-        return str(self.get_dict())
+        return str(self.param)
 
+    def __getattr__(self, name):
+        if name in self.param:
+            return self.param[name]
+        else:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+
+
+
+# @define
+# class ParamData:
+#     """Class for keeping track of the parameters read from file.
+#     TODO: could use some 3rd party library to avoid having to enumerate
+#     all options.
+#     """
+#     # not part of the param data
+#     _config_path: str
+#
+#     exposure: float = 1
+#     gain: float = 1
+#     exp_range: list[str] = Factory(list)
+#     gain_range: list[str] = Factory(list) 
+#     test_mode: bool = False
+#     camera_type: str = ""
+#     d_x: float = 0
+#     d_y: float = 0
+#     altspeed: float = 0
+#     azspeed: float = 0
+#     default_eyepiece: float = 0
+#     default_focal_length: float = 0
+#     scope_focal_length: float = 0
+#     eyepiece1: str = ""
+#     eyepiece2: str = ""
+#     eyepiece3: str = ""
+#     eyepiece4: str = ""
+#
+#
+#     def __init__(self, param, config_path):
+#         # check that there are no unknown entries in the param dict
+#         logging.debug(f"all attrs is {dir(self)}")
+#         setattr(self, "_config_path", config_path)
+#         for key in param:
+#             haskey = hasattr(self, key.lower())
+#             logging.debug(f"Key = {key}, {key.lower()}")
+#             logging.debug(f"{haskey}")
+#             logging.debug(f"{key.lower()=}, {param[key]=}")
+#             if haskey:
+#                 logging.debug(f"The type is {type(getattr(self, key.lower()))}")
+#             if key.lower() not in dir(self) and key[0] != "#":
+#                 raise ValueError(f"Unknown parameter: {key}")
+#             else:
+#                 # import code; code.interact(local=locals())
+#                 setattr(self, key.lower(), param[key])
+#         self.__attrs_init__(config_path)
+#
+#     @classmethod
+#     def from_param(cls, param):
+#         """Create a ParamData object from a dict"""
+#         return cls(**param)
+#
+#
+#     @staticmethod
+#     def load_param(cwd_path: Path):
+#         param = dict()
+#         config_path = cwd_path / "eFinder.config"
+#         if os.path.exists(config_path):
+#             with open(config_path) as h:
+#                 for line in h:
+#                     line = line.strip("\n").split(":")
+#                     param[line[0]] = str(line[1])
+#         logging.debug(f"Loading params from {config_path}: {param}")
+#         return ParamData(param, config_path=config_path)
+#
+#     def save_param(self):
+#         param = self.get_dict()
+#         logging.debug(f"Saving params to {self._config_path}: {param}")
+#         with open(self._config_path, "w") as h:
+#             for key, value in self.get_dict().items():
+#                 # logging.info("%s:%s\n" % (key, value))
+#                 h.write("%s:%s\n" % (key, value))
+#
+#     def get_dict(self):
+#          """Return a dict with the parameters if present """
+#          # import code; code.interact(local=locals())
+#          return asdict(self)
+#
+#     def __str__(self):
+#         return str(self.get_dict())
+#
 
 @dataclass
 class AstroData:

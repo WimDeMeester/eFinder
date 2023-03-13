@@ -76,7 +76,7 @@ class PlateSolve:
         for line in lines:
             if line.startswith("  The star "):
                 star_name = line.split(" ")[4]
-                logging.info("Solve-field Plot found: ", star_name)
+                logging.info(f"Solve-field Plot found: {star_name}")
                 break
 
         return star_name

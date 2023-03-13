@@ -22,10 +22,10 @@ import sys
 import glob
 import math
 from datetime import datetime
-from HandpadDebug import HandpadDebug
 from NexusDebug import NexusDebug
 from PIL import Image, ImageTk, ImageDraw, ImageOps
 from PIL.Image import Resampling
+from HandpadDebug import HandpadDebug
 import tkinter as tk
 import select
 import re
@@ -41,6 +41,7 @@ from common import Common
 from common import CameraData, CLIData, AstroData, OffsetData
 import utils
 from gui import EFinderGUI
+from eFinder import EFinder
 
 # comment out if this is the autoboot program
 os.system("pkill -9 -f eFinder.py")
@@ -63,9 +64,10 @@ report = {
 eye_piece = []
 pix_scale = 15
 
+version_string = "17_0"
 
 # TODO MR reduce globals to zero
-def capture(camera_settings: CameraSettings, radec):
+def capture(camera_settings: CameraData, radec):
     use_camera = camera_settings.camera
     extras = {}
     if camera_settings.testimage:
@@ -538,7 +540,7 @@ def reader():
         time.sleep(0.1)
 
 
-def get_param(cli_options: CLIOptions, location=Path(cwd_path, "eFinder.config")):
+def get_param(cli_options: CLIData, location=Path(cwd_path, "eFinder.config")):
     eye_piece, param, expRange, gainRange = [], dict(), None, None
     logging.debug(f"Loading params from {location}")
     if os.path.exists(location) == True:
@@ -599,11 +601,11 @@ def do_button(event):
         )
 
 
-def main(cli_options: CLIOptions):
+def main(cli_options: CLIData):
     # main code starts here
     global eFinder
     global nexus, ts, param, window, earth, test, handpad, coordinates, polaris, m31, panel, zoom, rotate, auto_rotate, manual_rotate, grat, EP, lock, flip, mirror, angle, go_to, pix_scale, platesolve, common, bright, hip, hd, abell, tycho2, ngc, version, eFinderGUI
-    common = Common(cwd_path, images_path, pix_scale, "_VNC")
+    common = Common(cwd_path, images_path, pix_scale, version_string, "_VNC")
     version = common.get_version()
     logging.info(f"Starting eFinder version {version}...")
     handpad = Display.Handpad(
@@ -624,13 +626,16 @@ def main(cli_options: CLIOptions):
     camera_debug = common.pick_camera("TEST", handpad, images_path)
     camera = common.pick_camera(camera_type, handpad, images_path)
 
-    camera_settings = CameraSettings(camera, camera_debug, param["Gain"],
-                                     param["Exposure"], "")
+    camera_settings = CameraData(camera, camera_debug, param["gain"],
+                                     param["exposure"], "", "")
     print(dir(cli_options))
     cli_options.exp_range = expRange
     cli_options.gain_range = gainRange
-    eFinder = EFinder(pix_scale=15, camera_settings=camera_settings,
-                      cli_options=cli_options)
+    astro_data = AstroData(nexus=nexus)
+    offset_data = OffsetData()
+    eFinder = EFinder(handpad, common, coordinates, camera,
+                      cli_options, astro_data, offset_data,
+                      param_data)
     eFinderGUI = EFinderGUI(nexus, param, camera_settings, cli_options)
     # TODO should be deleted once GUI has been properly split off 
     window = eFinderGUI.window
@@ -723,7 +728,7 @@ if __name__ == "__main__":
 
     utils.create_path(images_path)  # create dir if it doesn't yet exist
 
-    cli_options = CLIOptions(
+    cli_options = CLIData(
         not args.fakehandpad, not args.fakecamera, not args.fakenexus,
-        args.hasgui, [], [])
+        args.hasgui, [])
     main(cli_options)

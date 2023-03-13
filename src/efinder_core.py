@@ -33,7 +33,7 @@ from CameraDebug import CameraDebug
 
 
 class EFinder():
-
+    """ core eFinder functionality """
     def __init__(self, handpad: HandPad, common: Common, coordinates: Coordinates,
                  camera_data: CameraData, cli_data: CLIData,
                  astro_data: AstroData, offset_data: OffsetData,
@@ -294,7 +294,7 @@ class EFinder():
         self.handpad.set_lines(self.handpad.reset_pos, None,
                                f"new {self.offset_data.offset_str}", None)
         self.handpad.display_array()
-        self.param.save_param()
+        self.param.save_param(self.cwd_path)
 
     def reader(self):
         while True:
