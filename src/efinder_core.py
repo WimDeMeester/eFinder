@@ -59,7 +59,7 @@ class EFinder():
         scan.daemon = True
         scan.start()
 
-    
+
     def align(self, offset_flag=False):
         try:
             output = self.handpad.display
@@ -183,6 +183,7 @@ class EFinder():
                                self.coordinates.dd2dms(solved_radec[1]),
                                "time: " + str(elapsed_time)[0:4] + " s"
                                )
+
         self.deltaCalc()
         deltaXstr = "{: .2f}".format(float(self.astro_data.deltaAz))
         deltaYstr = "{: .2f}".format(float(self.astro_data.deltaAlt))
@@ -191,7 +192,7 @@ class EFinder():
                                "       y= " + deltaYstr,
                                "time: " + str(elapsed_time)[0:4] + " s"
                                )
-        return has_solved, has_star, star_name, elapsed_time
+        return has_solved, has_star, star_name, elapsed_time, solved_radec
 
 
     def deltaCalc(self):
@@ -213,7 +214,7 @@ class EFinder():
             self.param.save_param()
 
     def measure_offset(self, set_offset=True):
-        """ measures the offset wrt a known star in the platesolved field 
+        """ measures the offset wrt a known star in the platesolved field
         set_offset means that the offset will be set and saved in the params.
 
         """
@@ -307,4 +308,3 @@ class EFinder():
                 if result:
                     exec(result)
             time.sleep(0.1)
-

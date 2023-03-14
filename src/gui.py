@@ -935,8 +935,9 @@ class EFinderGUI():
         self.image_show()
 
     def solve(self):
-        solved, has_star, star_name, elapsed_time = self.efinder.solveImage()
+        solved, has_star, star_name, elapsed_time, solved_radec = self.efinder.solveImage()
         self.show_elapsed_time(elapsed_time)
+        self.show_solved_coordinates(solved_radec)
 
         if not solved:
             solve_image_failed(b_g, f_g)
@@ -1142,6 +1143,46 @@ class EFinderGUI():
         self.show_goto_target_and_diff(goto_radec, goto_altaz,
                                        self.efinder.astro_data.solved_altaz,
                                        scope_alt_rad)
+
+    def show_solved_coordinates(self, solved_radec):
+        solved_altaz = self.coordinates.conv_altaz(
+            self.astro_data.nexus.get_long(), self.astro_data.nexus.get_lat(), *(solved_radec))
+
+        b_g = self.b_g
+        f_g = self.f_g
+        tk.Label(
+            self.window,
+            width=10,
+            text=self.coordinates.hh2dms(solved_radec[0]),
+            anchor="e",
+            bg=b_g,
+            fg=f_g,
+        ).place(x=410, y=804)
+        tk.Label(
+            self.window,
+            width=10,
+            anchor="e",
+            text=self.coordinates.dd2dms(solved_radec[1]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=410, y=826)
+        tk.Label(
+            self.window,
+            width=10,
+            anchor="e",
+            text=self.coordinates.ddd2dms(solved_altaz[1]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=410, y=870)
+        tk.Label(
+            self.window,
+            width=10,
+            anchor="e",
+            text=self.coordinates.dd2dms(solved_altaz[0]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=410, y=892)
+
 
     def show_goto_target_and_diff(self, goto_radec, goto_altaz, solved_altaz,
                                   scope_alt_rad):
