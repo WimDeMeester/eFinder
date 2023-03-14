@@ -14,7 +14,7 @@ import re
 import time
 import math
 import os
-import glob 
+import glob
 
 
 class EFinderGUI():
@@ -28,7 +28,7 @@ class EFinderGUI():
     ts = load.timescale()
     window = tk.Tk()
     box_list = ["", "", "", "", "", ""]
-    eyepieces = None 
+    eyepieces = None
 
     def __init__(self, efinder: EFinder):
         self.efinder = efinder
@@ -46,7 +46,7 @@ class EFinderGUI():
     def start_loop(self):
         # main program loop, using tkinter GUI
         self.window.title("ScopeDog eFinder v" + self.common.get_version())
-        self.window.geometry("1300x1000+100+10")
+        self.window.geometry("1300x1000+100+40")
         self.window.configure(bg="black")
         self.window.bind("<<OLED_Button>>", self.do_button)
         self.setup_sidereal()
@@ -920,7 +920,7 @@ class EFinderGUI():
                  p[0:3], bg=self.b_g, fg=self.f_g).place(x=20, y=620)
         self.update_nexus_GUI()
         self.deltaCalcGUI()
-        
+
 
     def read_nexus_and_capture(self):
         self.update_nexus_GUI()
@@ -938,7 +938,7 @@ class EFinderGUI():
         solved, has_star, star_name, elapsed_time = self.efinder.solveImage()
         self.show_elapsed_time(elapsed_time)
 
-        if not solved: 
+        if not solved:
             solve_image_failed(b_g, f_g)
             return
         logging.debug(f"Found star is {star_name}")
@@ -1116,7 +1116,7 @@ class EFinderGUI():
             self.box_write("solve failure")
             return
 
-    
+
     def readTarget(self):
         """ read from nexus if there's a target set """
         goto_ra = self.nexus.get(":Gr#")
