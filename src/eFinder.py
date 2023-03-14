@@ -69,8 +69,8 @@ def main(cli_data: CLIData):
     # main program loop, scan buttons and refresh display
     camera_data = CameraData(camera=camera,
                              camera_debug=camera_debug,
-                             gain=1,
-                             exposure=1,
+                             gain=param.gain,
+                             exposure=param.exposure,
                              pix_scale=pix_scale,
                              testimage="")
     astro_data = AstroData(nexus=nexus)
@@ -81,9 +81,9 @@ def main(cli_data: CLIData):
     if cli_data.has_gui:
         gui = EFinderGUI(eFinder)
         gui.start_loop()
-
-    while True:  # next loop looks for button press and sets display option x,y
-        time.sleep(0.1)
+    else:
+        while True:  # next loop looks for button press and sets display option x,y
+            time.sleep(0.1)
 
 
 if __name__ == "__main__":

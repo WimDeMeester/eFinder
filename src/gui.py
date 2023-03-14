@@ -28,7 +28,7 @@ class EFinderGUI():
     ts = load.timescale()
     window = tk.Tk()
     box_list = ["", "", "", "", "", ""]
-    eye_piece = []
+    eyepieces = None 
 
     def __init__(self, efinder: EFinder):
         self.efinder = efinder
@@ -41,6 +41,7 @@ class EFinderGUI():
         self.nexus: NexusInterface = self.astro_data.nexus
         self.offset_data: OffsetData = efinder.offset_data
         self.cwd_path: Path = Path.cwd()
+        self.eyepieces = self.param.eyepieces
 
     def start_loop(self):
         # main program loop, using tkinter GUI
@@ -51,7 +52,7 @@ class EFinderGUI():
         self.setup_sidereal()
         # self.sidereal()
         self.update_nexus_GUI()
-        sid = threading.Thread(target=self.sidereal)
+        sid = threading.Thread(daemon=True, target=self.sidereal)
         sid.daemon = True
         sid.start()
         NexStr = self.nexus.get_nex_str()
@@ -875,10 +876,10 @@ class EFinderGUI():
         ).pack(padx=1, pady=2)
         self.EPlength = StringVar()
         self.EPlength.set(float(self.param.default_eyepiece))
-        for i in range(len(self.eye_piece)):
+        for i in range(len(self.eyepieces)):
             tk.Radiobutton(
                 EP_frame,
-                text=self.eye_piece[i][0],
+                text=self.eyepieces[i]['name'],
                 bg=b_g,
                 fg=f_g,
                 activebackground="red",
@@ -886,7 +887,7 @@ class EFinderGUI():
                 highlightbackground="black",
                 bd=0,
                 width=20,
-                value=self.eye_piece[i][1] * self.eye_piece[i][2],
+                value=self.eyepieces[i]['mm'] * self.eyepieces[i]['fov'],
                 variable=self.EPlength,
             ).pack(padx=1, pady=0)
         self.get_offset()

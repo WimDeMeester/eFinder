@@ -61,14 +61,13 @@ class ParamData:
 
     @staticmethod
     def load_param(cwd_path: Path):
-        config_path = cwd_path / "eFinder.config"
-        if os.path.exists(config_path):
+        config_path = Path(cwd_path / "eFinder.config")
+        try:
             with open(config_path, "r") as stream:
-                try:
-                    param = yaml.safe_load(stream)
-                except yaml.YAMLError as exc:
-                    print(exc)
-            logging.debug(f"Loaded params from {config_path}: {param}")
+                param = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+                logging.error(exc)
+        logging.debug(f"Loaded params from {config_path}: {param}")
         return ParamData(param, config_path=config_path)
 
     def save_param(self, config_path=config_path):

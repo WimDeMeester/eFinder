@@ -540,34 +540,34 @@ def reader():
         time.sleep(0.1)
 
 
-def get_param(cli_options: CLIData, location=Path(cwd_path, "eFinder.config")):
-    eye_piece, param, expRange, gainRange = [], dict(), None, None
-    logging.debug(f"Loading params from {location}")
-    if os.path.exists(location) == True:
-        with open(location) as h:
-            for line in h:
-                line = line.strip("\n").split(":")
-                param[line[0]] = line[1]
-                if line[0].startswith("Eyepiece"):
-                    label, fl, afov = line[1].split(",")
-                    eye_piece.append((label, float(fl), float(afov)))
-                elif line[0].startswith("Exp_range"):
-                    expRange = line[1].split(",")
-                    cli_options.exp_range = expRange
-                elif line[0].startswith("Gain_range"):
-                    gainRange = line[1].split(",")
-                    cli_options.gain_range = gainRange
-    return eye_piece, param, expRange, gainRange
-
-
-def save_param():
-    global param, exposure, polaris, m31
-    param["Exposure"] = exposure.get()
-    param["Gain"] = gain.get()
-    param["Test mode"] = polaris.get() or m31.get()
-    with open(cwd_path / "eFinder.config", "w") as h:
-        for key, value in param.items():
-            h.write("%s:%s\n" % (key, value))
+# def get_param(cli_options: CLIData, location=Path(cwd_path, "eFinder.config")):
+#     eye_piece, param, expRange, gainRange = [], dict(), None, None
+#     logging.debug(f"Loading params from {location}")
+#     if os.path.exists(location) == True:
+#         with open(location) as h:
+#             for line in h:
+#                 line = line.strip("\n").split(":")
+#                 param[line[0]] = line[1]
+#                 if line[0].startswith("Eyepiece"):
+#                     label, fl, afov = line[1].split(",")
+#                     eye_piece.append((label, float(fl), float(afov)))
+#                 elif line[0].startswith("Exp_range"):
+#                     expRange = line[1].split(",")
+#                     cli_options.exp_range = expRange
+#                 elif line[0].startswith("Gain_range"):
+#                     gainRange = line[1].split(",")
+#                     cli_options.gain_range = gainRange
+#     return eye_piece, param, expRange, gainRange
+#
+#
+# def save_param():
+#     global param, exposure, polaris, m31
+#     param["Exposure"] = exposure.get()
+#     param["Gain"] = gain.get()
+#     param["Test mode"] = polaris.get() or m31.get()
+#     with open(cwd_path / "eFinder.config", "w") as h:
+#         for key, value in param.items():
+#             h.write("%s:%s\n" % (key, value))
 
 
 def do_button(event):
