@@ -51,7 +51,6 @@ class ParamData:
         # check that there are no unknown entries in the param dict
         self.config_path = config_path
         self.param = dotdict(param)
-        logging.debug(f"Setting params to {self.param}")
 
     @classmethod
     def from_param(cls, param):
@@ -67,7 +66,6 @@ class ParamData:
                 param = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
                 logging.error(exc)
-        logging.debug(f"Loaded params from {config_path}: {param}")
         return ParamData(param, config_path=config_path)
 
     def save_param(self, config_path=config_path):

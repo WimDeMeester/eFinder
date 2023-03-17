@@ -42,8 +42,6 @@ class EFinderGUI():
         self.offset_data: OffsetData = efinder.offset_data
         self.cwd_path: Path = Path.cwd()
         self.eyepieces = self.param.eyepieces
-
-    def start_loop(self):
         # main program loop, using tkinter GUI
         self.window.title("ScopeDog eFinder v" + self.common.get_version())
         self.window.geometry("1300x1000+100+10")
@@ -51,10 +49,9 @@ class EFinderGUI():
         self.window.bind("<<OLED_Button>>", self.do_button)
         self.setup_sidereal()
         # self.sidereal()
+
+    def start_loop(self):
         self.update_nexus_GUI()
-        sid = threading.Thread(daemon=True, target=self.sidereal)
-        sid.daemon = True
-        sid.start()
         NexStr = self.nexus.get_nex_str()
         self.draw_screen(NexStr)
 
@@ -1218,3 +1215,4 @@ class EFinderGUI():
                  bg=self.b_g, fg=self.f_g).place(x=315, y=870)
         tk.Label(self.window, width=10, anchor="e", text=deltaAltstr,
                  bg=self.b_g, fg=self.f_g).place(x=315, y=892)
+

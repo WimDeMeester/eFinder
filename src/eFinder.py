@@ -29,9 +29,18 @@ from handpad import HandPad
 from common import CameraData, CLIData, AstroData, OffsetData, ParamData
 from datetime import datetime
 from NexusInterface import NexusInterface
+import threading
+from functools import partial
 
 
 version_string = "17_0"
+
+def update_sidereal(gui):
+    gui.sidereal()
+
+def start_sidereal(gui):
+    part = partial(update_sidereal, gui)
+    threading.Thread(daemon=True, target=part).start()
 
 
 # main code starts here
@@ -80,11 +89,13 @@ def main(cli_data: CLIData):
                       astro_data, offset_data, param)
     if cli_data.has_gui:
         gui = EFinderGUI(eFinder)
+        start_sidereal(gui)
         gui.start_loop()
+    
     else:
         while True:  # next loop looks for button press and sets display option x,y
             time.sleep(0.1)
-
+            
 
 if __name__ == "__main__":
     logger = logging.getLogger()
