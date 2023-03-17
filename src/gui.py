@@ -14,13 +14,20 @@ import re
 import time
 import math
 import os
-import glob 
+import glob
 
 
-class EFinderGUI():
+class EFinderGUI:
     f_g = "red"
     b_g = "black"
-    LST, lbl_LST, lbl_UTC, lbl_date, nexus, sidereal = None, None, None, None, None, None
+    LST, lbl_LST, lbl_UTC, lbl_date, nexus, sidereal = (
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
     exposure = 1.0
     # planets and earth not used
     planets = load("de421.bsp")
@@ -28,7 +35,7 @@ class EFinderGUI():
     ts = load.timescale()
     window = tk.Tk()
     box_list = ["", "", "", "", "", ""]
-    eyepieces = None 
+    eyepieces = None
 
     def __init__(self, efinder: EFinder):
         self.efinder = efinder
@@ -44,7 +51,7 @@ class EFinderGUI():
         self.eyepieces = self.param.eyepieces
         # main program loop, using tkinter GUI
         self.window.title("ScopeDog eFinder v" + self.common.get_version())
-        self.window.geometry("1300x1000+100+10")
+        self.window.geometry("1300x1000+100+40")
         self.window.configure(bg="black")
         self.window.bind("<<OLED_Button>>", self.do_button)
         self.setup_sidereal()
@@ -97,6 +104,7 @@ class EFinderGUI():
     def do_button(self, event):
         # TODO replace the standard handpad operation?
         logging.info(f"do_button with {event=}")
+
     #     global handpad, coordinates, solved_radec
     #     logging.debug(f"button event: {button}")
     #     if button == "21":
@@ -180,9 +188,15 @@ class EFinderGUI():
         self.deltaCalcGUI()
 
     def show_elapsed_time(self, elapsed_time):
-        """ Show the elapsed time in the GUI """
-        tk.Label(self.window, text=f"{elapsed_time:.2f} s", width=20, anchor="e",
-                 bg=self.b_g, fg=self.f_g).place(x=315, y=936)
+        """Show the elapsed time in the GUI"""
+        tk.Label(
+            self.window,
+            text=f"{elapsed_time:.2f} s",
+            width=20,
+            anchor="e",
+            bg=self.b_g,
+            fg=self.f_g,
+        ).place(x=315, y=936)
 
     def image_show(self):
         img2 = Image.open(self.cli_data.images_path / "capture.jpg")
@@ -213,8 +227,11 @@ class EFinderGUI():
         if self.EP.get() == "1":
             draw = ImageDraw.Draw(img2)
             tfov = (
-                (float(self.EPlength.get()) * height /
-                 float(self.param.scope_focal_length))
+                (
+                    float(self.EPlength.get())
+                    * height
+                    / float(self.param.scope_focal_length)
+                )
                 * 60
                 / h
             ) / 2  # half tfov in pixels
@@ -267,11 +284,13 @@ class EFinderGUI():
         )
         self.lbl_LST = Label(self.window, bg=b_g, fg=f_g, text=LSTstr)
         self.lbl_LST.place(x=55, y=44)
-        self.lbl_UTC = Label(self.window, bg=b_g, fg=f_g,
-                             text=t.utc_strftime("%H:%M:%S"))
+        self.lbl_UTC = Label(
+            self.window, bg=b_g, fg=f_g, text=t.utc_strftime("%H:%M:%S")
+        )
         self.lbl_UTC.place(x=55, y=22)
-        self.lbl_date = Label(self.window, bg=b_g, fg=f_g,
-                              text=t.utc_strftime("%d %b %Y"))
+        self.lbl_date = Label(
+            self.window, bg=b_g, fg=f_g, text=t.utc_strftime("%d %b %Y")
+        )
         self.lbl_date.place(x=55, y=0)
 
     # GUI specific
@@ -295,11 +314,19 @@ class EFinderGUI():
     # the offset methods:
 
     def measure_offset(self):
-        """ Uses core measure offset but does some GUI stuff + allows measuring
+        """Uses core measure offset but does some GUI stuff + allows measuring
         the offset without immediately setting it.
         """
         # logging.debug(f"Starting measure_offset for star name: {self.offset_data.star_name}")
-        success, d_x, d_y, dxstr, dystr, has_star, star_name = self.efinder.measure_offset(set_offset=False)
+        (
+            success,
+            d_x,
+            d_y,
+            dxstr,
+            dystr,
+            has_star,
+            star_name,
+        ) = self.efinder.measure_offset(set_offset=False)
 
         if not success:
             self.box_write("solve failed", True)
@@ -307,14 +334,24 @@ class EFinderGUI():
             return
 
         if star_name == "":  # display warning in red.
-            tk.Label(self.window, width=8, text=star_name, anchor="w", bg=self.f_g, fg=self.b_g).place(
-                x=115, y=470
-            )
+            tk.Label(
+                self.window,
+                width=8,
+                text=star_name,
+                anchor="w",
+                bg=self.f_g,
+                fg=self.b_g,
+            ).place(x=115, y=470)
         else:
-            tk.Label(self.window, width=8, text=star_name, anchor="w", bg=self.b_g, fg=self.f_g).place(
-                x=115, y=470
-            )
-        self.offset_data.offset_new =  d_x, d_y
+            tk.Label(
+                self.window,
+                width=8,
+                text=star_name,
+                anchor="w",
+                bg=self.b_g,
+                fg=self.f_g,
+            ).place(x=115, y=470)
+        self.offset_data.offset_new = d_x, d_y
         logging.debug(f"measure_offset stored: {self.offset_data.offset_new=}")
         self.box_write(star_name)
         self.tk_label(text=f"{dxstr}, {dystr}", width=9, anchor="w", x=110, y=450)
@@ -325,47 +362,66 @@ class EFinderGUI():
         self.box_write("offset saved")
 
     def get_offset(self):
-        x_offset_saved, y_offset_saved, dxstr_saved, dystr_saved = self.common.dxdy2pixel(
-            float(self.param.d_x), float(self.param.d_y)
+        (
+            x_offset_saved,
+            y_offset_saved,
+            dxstr_saved,
+            dystr_saved,
+        ) = self.common.dxdy2pixel(float(self.param.d_x), float(self.param.d_y))
+        self.tk_label(
+            text=dxstr_saved + "," + dystr_saved, width=9, anchor="w", x=110, y=520
         )
-        self.tk_label(text=dxstr_saved + "," + dystr_saved, width=9, anchor="w", x=110, y=520)
 
     def use_saved_offset(self):
         x_offset_saved, y_offset_saved, dxstr, dystr = self.common.dxdy2pixel(
             float(self.param.d_x), float(self.param.d_y)
         )
         self.offset_data.offset = float(self.param.d_x), float(self.param.d_y)
-        self.tk_label(text=dxstr + "," + dystr, width=20, x=60, y=400)
+        self.tk_label(text=dxstr + "," + dystr, width=10, x=70, y=400)
 
-    def tk_label(self, text, width, x, y, b_g=None, f_g=None, anchor="CENTER", clear: bool=False):
+    def tk_label(
+        self,
+        text,
+        width,
+        x,
+        y,
+        b_g=None,
+        f_g=None,
+        anchor="CENTER",
+        clear: bool = False,
+    ):
         if b_g is None:
             b_g = self.b_g
         if f_g is None:
             f_g = self.f_g
         if clear:
-            tk.Label(self.window, anchor=anchor, text=" "*width, bg=b_g, fg=f_g, width=width).place(
-                x=x, y=y
-            )
+            tk.Label(
+                self.window,
+                anchor=anchor,
+                text=" " * width,
+                bg=b_g,
+                fg=f_g,
+                width=width,
+            ).place(x=x, y=y)
 
-        tk.Label(self.window, text=text, bg=b_g, fg=f_g, width=width).place(
-            x=x, y=y
-        )
+        tk.Label(self.window, text=text, bg=b_g, fg=f_g, width=width).place(x=x, y=y)
 
     def use_new_offset(self):
         self.offset_data.offset = self.offset_data.offset_new
         x_offset_new, y_offset_new, dxstr, dystr = self.common.dxdy2pixel(
-            self.offset_data.offset[0], self.offset_data.offset[1])
-
-        tk.Label(self.window, text=dxstr + "," + dystr, bg=self.b_g, fg=self.f_g, width=8).place(
-            x=60, y=400
+            self.offset_data.offset[0], self.offset_data.offset[1]
         )
+
+        tk.Label(
+            self.window, text=dxstr + "," + dystr, bg=self.b_g, fg=self.f_g, width=8
+        ).place(x=60, y=400)
 
     def reset_offset(self):
         self.offset_data.offset = self.offset_data.offset_reset
         self.box_write("offset reset")
-        tk.Label(self.window, text="0,0", bg=self.b_g,
-                 fg="red", width=8).place(x=60, y=400)
-
+        tk.Label(self.window, text="0,0", bg=self.b_g, fg="red", width=8).place(
+            x=60, y=400
+        )
 
     def draw_screen(self, NexStr):
         b_g = self.b_g
@@ -378,23 +434,26 @@ class EFinderGUI():
             self.window,
             width=18,
             anchor="w",
-            text=str(self.nexus.get_long()) + "\u00b0  " + str(self.nexus.get_lat()) + "\u00b0",
+            text=str(self.nexus.get_long())
+            + "\u00b0  "
+            + str(self.nexus.get_lat())
+            + "\u00b0",
             bg=b_g,
             fg=f_g,
         ).place(x=55, y=66)
         img = Image.open(self.cwd_path / "splashscreen.jpeg")
         img = img.resize((1014, 760))
         img = ImageTk.PhotoImage(img)
-        self.panel = tk.Label(self.window, highlightbackground="red",
-                         highlightthickness=2, image=img)
+        self.panel = tk.Label(
+            self.window, highlightbackground="red", highlightthickness=2, image=img
+        )
         self.panel.place(x=200, y=5, width=1014, height=760)
 
         self.exposure_str: StringVar = StringVar()
         self.exposure_str.set(str(self.camera_data.exposure))
         exp_frame = Frame(self.window, bg="black")
         exp_frame.place(x=0, y=100)
-        tk.Label(exp_frame, text="Exposure", bg=b_g,
-                 fg=f_g).pack(padx=1, pady=1)
+        tk.Label(exp_frame, text="Exposure", bg=b_g, fg=f_g).pack(padx=1, pady=1)
         expRange = self.param.exp_range
         for i in range(len(expRange)):
             tk.Radiobutton(
@@ -407,7 +466,7 @@ class EFinderGUI():
                 anchor="w",
                 highlightbackground="black",
                 value=float(expRange[i]),
-                variable=self.exposure_str
+                variable=self.exposure_str,
             ).pack(padx=1, pady=1)
 
         gain = StringVar()
@@ -459,8 +518,7 @@ class EFinderGUI():
             variable=self.m31,
         ).pack(padx=1, pady=1)
 
-        self.box_write(
-            "ccd is " + self.camera_data.camera.get_cam_type())
+        self.box_write("ccd is " + self.camera_data.camera.get_cam_type())
         self.box_write("Nexus " + NexStr)
 
         but_frame = Frame(self.window, bg="black")
@@ -588,13 +646,12 @@ class EFinderGUI():
             width=8,
             command=self.reset_offset,
         ).pack(padx=1, pady=1)
-        d_x, d_y, dxstr, dystr = self.common.pixel2dxdy(self.offset_data.offset[0],
-                                                        self.offset_data.offset[1])
+        d_x, d_y, dxstr, dystr = self.common.pixel2dxdy(
+            self.offset_data.offset[0], self.offset_data.offset[1]
+        )
 
-        tk.Label(self.window, text="Offset:",
-                 bg=b_g, fg=f_g).place(x=10, y=400)
-        tk.Label(self.window, text="0,0", bg=b_g,
-                 fg=f_g, width=6).place(x=60, y=400)
+        tk.Label(self.window, text="Offset:", bg=b_g, fg=f_g).place(x=10, y=400)
+        tk.Label(self.window, text="0,0", bg=b_g, fg=f_g, width=6).place(x=60, y=400)
 
         nex_frame = Frame(self.window, bg="black")
         nex_frame.place(x=250, y=766)
@@ -609,12 +666,9 @@ class EFinderGUI():
             command=self.update_nexus_GUI,
         ).pack(padx=1, pady=1)
 
-        tk.Label(self.window, text="delta x,y",
-                 bg=b_g, fg=f_g).place(x=345, y=770)
-        tk.Label(self.window, text="Solution",
-                 bg=b_g, fg=f_g).place(x=435, y=770)
-        tk.Label(self.window, text="delta x,y",
-                 bg=b_g, fg=f_g).place(x=535, y=770)
+        tk.Label(self.window, text="delta x,y", bg=b_g, fg=f_g).place(x=345, y=770)
+        tk.Label(self.window, text="Solution", bg=b_g, fg=f_g).place(x=435, y=770)
+        tk.Label(self.window, text="delta x,y", bg=b_g, fg=f_g).place(x=535, y=770)
         target_frame = Frame(self.window, bg="black")
         target_frame.place(x=620, y=766)
         tk.Button(
@@ -876,7 +930,7 @@ class EFinderGUI():
         for i in range(len(self.eyepieces)):
             tk.Radiobutton(
                 EP_frame,
-                text=self.eyepieces[i]['name'],
+                text=self.eyepieces[i]["name"],
                 bg=b_g,
                 fg=f_g,
                 activebackground="red",
@@ -884,7 +938,7 @@ class EFinderGUI():
                 highlightbackground="black",
                 bd=0,
                 width=20,
-                value=self.eyepieces[i]['mm'] * self.eyepieces[i]['fov'],
+                value=self.eyepieces[i]["mm"] * self.eyepieces[i]["fov"],
                 variable=self.EPlength,
             ).pack(padx=1, pady=0)
         self.get_offset()
@@ -910,32 +964,42 @@ class EFinderGUI():
             self.box_write(message)
             tk.Label(self.window, text=message).place(x=20, y=680)
         # status updates
-        tk.Label(self.window, text="align count: " + str(self.astro_data.align_count), bg=self.b_g, fg=self.f_g).place(
-            x=20, y=600
-        )
-        tk.Label(self.window, text="Nexus report: " +
-                 p[0:3], bg=self.b_g, fg=self.f_g).place(x=20, y=620)
+        tk.Label(
+            self.window,
+            text="align count: " + str(self.astro_data.align_count),
+            bg=self.b_g,
+            fg=self.f_g,
+        ).place(x=20, y=600)
+        tk.Label(
+            self.window, text="Nexus report: " + p[0:3], bg=self.b_g, fg=self.f_g
+        ).place(x=20, y=620)
         self.update_nexus_GUI()
         self.deltaCalcGUI()
-        
 
     def read_nexus_and_capture(self):
         self.update_nexus_GUI()
         extras = {}
         if self.polaris.get() == "1":
-            extras['testimage'] = "polaris"
+            extras["testimage"] = "polaris"
         elif self.m31.get() == "1":
-            extras['testimage'] = "m31"
+            extras["testimage"] = "m31"
         logging.debug(f"Calling capture with {extras=}")
 
         self.efinder.capture(extras=extras)
         self.image_show()
 
     def solve(self):
-        solved, has_star, star_name, elapsed_time = self.efinder.solveImage()
+        (
+            solved,
+            has_star,
+            star_name,
+            elapsed_time,
+            solved_radec,
+        ) = self.efinder.solveImage()
         self.show_elapsed_time(elapsed_time)
+        self.show_solved_coordinates(solved_radec)
 
-        if not solved: 
+        if not solved:
             solve_image_failed(b_g, f_g)
             return
         logging.debug(f"Found star is {star_name}")
@@ -976,11 +1040,11 @@ class EFinderGUI():
             return
         logging.info("%s %s %s" % ("goto RA & Dec", goto_ra, goto_dec))
         ra = float(goto_ra[0]) + float(goto_ra[1]) / 60 + float(goto_ra[2]) / 3600
-        dec = float(goto_dec[0]) + float(goto_dec[1]) / \
-            60 + float(goto_dec[2]) / 3600
+        dec = float(goto_dec[0]) + float(goto_dec[1]) / 60 + float(goto_dec[2]) / 3600
         logging.info("%s %s %s" % ("lgoto radec", ra, dec))
         alt_g, az_g = self.coordinates.conv_altaz(
-            self.nexus.get_long(), self.nexus.get_lat(), ra, dec)
+            self.nexus.get_long(), self.nexus.get_lat(), ra, dec
+        )
         logging.info("%s %s %s" % ("target Az Alt", az_g, alt_g))
         delta_Az = (az_g - self.astro_data.solved_altaz[1]) * 60  # +ve move scope right
         delta_Alt = (alt_g - self.astro_data.solved_altaz[0]) * 60  # +ve move scope up
@@ -997,8 +1061,8 @@ class EFinderGUI():
         azPulse = abs(dAz / float(self.param.az_speed))  # seconds
         altPulse = abs(dAlt / float(self.param.alt_speed))
         logging.debug(
-            "%s %.2f  %s  %.2f %s" % (
-                "azPulse:", azPulse, "altPulse:", altPulse, "seconds")
+            "%s %.2f  %s  %.2f %s"
+            % ("azPulse:", azPulse, "altPulse:", altPulse, "seconds")
         )
         self.nexus.write("#:RG#")  # set move speed to guide
         self.box_write("moving scope in Az")
@@ -1113,9 +1177,8 @@ class EFinderGUI():
             self.box_write("solve failure")
             return
 
-    
     def readTarget(self):
-        """ read from nexus if there's a target set """
+        """read from nexus if there's a target set"""
         goto_ra = self.nexus.get(":Gr#")
         goto_dec = self.nexus.get(":Gd#")
         if (
@@ -1135,13 +1198,59 @@ class EFinderGUI():
         solved_altaz = self.astro_data.solved_altaz
         scope_alt_rad = solved_altaz[0] * math.pi / 180
         goto_altaz = self.coordinates.conv_altaz(
-            self.astro_data.nexus.get_long(), self.astro_data.nexus.get_lat(), *(goto_radec))
-        self.show_goto_target_and_diff(goto_radec, goto_altaz,
-                                       self.efinder.astro_data.solved_altaz,
-                                       scope_alt_rad)
+            self.astro_data.nexus.get_long(),
+            self.astro_data.nexus.get_lat(),
+            *(goto_radec),
+        )
+        self.show_goto_target_and_diff(
+            goto_radec, goto_altaz, self.efinder.astro_data.solved_altaz, scope_alt_rad
+        )
 
-    def show_goto_target_and_diff(self, goto_radec, goto_altaz, solved_altaz,
-                                  scope_alt_rad):
+    def show_solved_coordinates(self, solved_radec):
+        solved_altaz = self.coordinates.conv_altaz(
+            self.astro_data.nexus.get_long(),
+            self.astro_data.nexus.get_lat(),
+            *(solved_radec),
+        )
+
+        b_g = self.b_g
+        f_g = self.f_g
+        tk.Label(
+            self.window,
+            width=10,
+            text=self.coordinates.hh2dms(solved_radec[0]),
+            anchor="e",
+            bg=b_g,
+            fg=f_g,
+        ).place(x=410, y=804)
+        tk.Label(
+            self.window,
+            width=10,
+            anchor="e",
+            text=self.coordinates.dd2dms(solved_radec[1]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=410, y=826)
+        tk.Label(
+            self.window,
+            width=10,
+            anchor="e",
+            text=self.coordinates.ddd2dms(solved_altaz[1]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=410, y=870)
+        tk.Label(
+            self.window,
+            width=10,
+            anchor="e",
+            text=self.coordinates.dd2dms(solved_altaz[0]),
+            bg=b_g,
+            fg=f_g,
+        ).place(x=410, y=892)
+
+    def show_goto_target_and_diff(
+        self, goto_radec, goto_altaz, solved_altaz, scope_alt_rad
+    ):
         b_g = self.b_g
         f_g = self.f_g
         tk.Label(
@@ -1188,31 +1297,36 @@ class EFinderGUI():
         dt_Alt = 60 * (dt_Alt)  # in arcminutes
         dt_Azstr = "{: .1f}".format(float(dt_Az)).ljust(8)[:8]
         dt_Altstr = "{: .1f}".format(float(dt_Alt)).ljust(8)[:8]
-        tk.Label(self.window, width=10, anchor="e", text=dt_Azstr, bg=b_g, fg=f_g).place(
-            x=500, y=870
-        )
-        tk.Label(self.window, width=10, anchor="e", text=dt_Altstr, bg=b_g, fg=f_g).place(
-            x=500, y=892
-        )
-
+        tk.Label(
+            self.window, width=10, anchor="e", text=dt_Azstr, bg=b_g, fg=f_g
+        ).place(x=500, y=870)
+        tk.Label(
+            self.window, width=10, anchor="e", text=dt_Altstr, bg=b_g, fg=f_g
+        ).place(x=500, y=892)
 
     def box_write(self, new_line):
         t = self.ts.now()
         for i in range(5, 0, -1):
             self.box_list[i] = self.box_list[i - 1]
-        self.box_list[0] = (t.utc_strftime(
-            "%H:%M:%S ") + new_line).ljust(36)[:35]
+        self.box_list[0] = (t.utc_strftime("%H:%M:%S ") + new_line).ljust(36)[:35]
         for i in range(0, 5, 1):
-            tk.Label(self.window, text=self.box_list[i], bg=self.b_g, fg=self.f_g).place(
-                x=1050, y=980 - i * 16)
+            tk.Label(
+                self.window, text=self.box_list[i], bg=self.b_g, fg=self.f_g
+            ).place(x=1050, y=980 - i * 16)
 
     def deltaCalcGUI(self):
-        """ do the core delta calc, then update GUI """
+        """do the core delta calc, then update GUI"""
         self.efinder.deltaCalc()
         deltaAzstr = "{: .1f}".format(float(self.astro_data.deltaAz)).ljust(8)[:8]
         deltaAltstr = "{: .1f}".format(float(self.astro_data.deltaAlt)).ljust(8)[:8]
-        tk.Label(self.window, width=10, anchor="e", text=deltaAzstr,
-                 bg=self.b_g, fg=self.f_g).place(x=315, y=870)
-        tk.Label(self.window, width=10, anchor="e", text=deltaAltstr,
-                 bg=self.b_g, fg=self.f_g).place(x=315, y=892)
-
+        tk.Label(
+            self.window, width=10, anchor="e", text=deltaAzstr, bg=self.b_g, fg=self.f_g
+        ).place(x=315, y=870)
+        tk.Label(
+            self.window,
+            width=10,
+            anchor="e",
+            text=deltaAltstr,
+            bg=self.b_g,
+            fg=self.f_g,
+        ).place(x=315, y=892)
