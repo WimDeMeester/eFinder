@@ -66,6 +66,8 @@ class SerialOutput(Output):
     def display(self, line0: str, line1: str, line2: str) -> None:
         if line1 is None:
             line1 = ""
+        if type(line1) is int or type(line1) is float: 
+            line1 = str(line1)
         self.box.write(bytes(("0:" + line0 + "\n").encode("UTF-8")))
         self.box.write(bytes(("1:" + line1 + "\n").encode("UTF-8")))
         self.box.write(bytes(("2:" + line2 + "\n").encode("UTF-8")))
