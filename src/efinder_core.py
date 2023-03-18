@@ -223,7 +223,7 @@ class EFinder():
         output.display("started capture", "", "")
         self.capture(offset_flag)
         self.imgDisplay()
-        _, has_star, star_name, _ = self.solveImage(offset_flag=True)
+        _, has_star, star_name, _, _ = self.solveImage(offset_flag=True)
         if not self.astro_data.solved:
             output.display("solve failed", "", "")
             return False
