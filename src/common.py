@@ -57,7 +57,6 @@ class ParamData:
         """Create a ParamData object from a dict"""
         return cls(**param)
 
-
     @staticmethod
     def load_param(cwd_path: Path):
         config_path = Path(cwd_path / "eFinder.config")
@@ -73,7 +72,6 @@ class ParamData:
             with open(self.config_path, 'w') as stream:
                 logging.debug("Saving params: {self.param}")
                 yaml.dump(self.param, stream)
-
 
     def get_dict(self):
          """Return a dict with the parameters if present """
@@ -268,7 +266,7 @@ class Common:
         return solvedPos_scope
 
     def deltaCalc(self, nexus_altaz, solved_altaz, scope_alt, delta_az, delta_alt):
-        deltaAz = solved_altaz[1] - nexus_altaz[1]
+        delta_az = solved_altaz[1] - nexus_altaz[1]
         if abs(delta_az) > 180:
             if delta_az < 0:
                 delta_az = delta_az + 360
