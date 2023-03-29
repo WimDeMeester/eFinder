@@ -449,8 +449,8 @@ class EFinderGUI:
         )
         self.panel.place(x=200, y=5, width=1014, height=760)
 
-        self.exposure_str: StringVar = StringVar()
-        self.exposure_str.set(str(self.camera_data.exposure))
+        exposure_str = StringVar()
+        exposure_str.set(str(self.camera_data.exposure))
         exp_frame = Frame(self.window, bg="black")
         exp_frame.place(x=0, y=100)
         tk.Label(exp_frame, text="Exposure", bg=b_g, fg=f_g).pack(padx=1, pady=1)
@@ -465,8 +465,8 @@ class EFinderGUI:
                 activebackground="red",
                 anchor="w",
                 highlightbackground="black",
-                value=float(expRange[i]),
-                variable=self.exposure_str,
+                value=str(expRange[i]),
+                variable=exposure_str,
             ).pack(padx=1, pady=1)
 
         gain = StringVar()
@@ -486,7 +486,7 @@ class EFinderGUI:
                 anchor="w",
                 highlightbackground="black",
                 value=float(gainRange[i]),
-                variable=self.camera_data.gain,
+                variable=gain,
             ).pack(padx=1, pady=1)
 
         options_frame = Frame(self.window, bg="black")
