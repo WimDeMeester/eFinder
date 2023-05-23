@@ -213,15 +213,15 @@ class EFinder():
             self.offset_data.offset = d_x, d_y
             self.param.save_param()
 
-    def measure_offset(self, set_offset=True):
-        """ measures the offset wrt a known star in the platesolved field
+    def measure_offset(self, extras, set_offset=True):
+        """measures the offset wrt a known star in the platesolved field
         set_offset means that the offset will be set and saved in the params.
 
         """
         output = self.handpad.display
         offset_flag = True
         output.display("started capture", "", "")
-        self.capture(offset_flag)
+        self.capture(offset_flag, extras)
         self.imgDisplay()
         _, has_star, star_name, _, _ = self.solveImage(offset_flag=True)
         if not self.astro_data.solved:

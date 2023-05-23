@@ -318,6 +318,11 @@ class EFinderGUI:
         the offset without immediately setting it.
         """
         # logging.debug(f"Starting measure_offset for star name: {self.offset_data.star_name}")
+        extras = {}
+        if self.polaris.get() == "1":
+            extras["testimage"] = "polaris"
+        elif self.m31.get() == "1":
+            extras["testimage"] = "m31"
         (
             success,
             d_x,
@@ -326,7 +331,8 @@ class EFinderGUI:
             dystr,
             has_star,
             star_name,
-        ) = self.efinder.measure_offset(set_offset=False)
+        ) = self.efinder.measure_offset(extras=extras, set_offset=False)
+        self.image_show()
 
         if not success:
             self.box_write("solve failed", True)
