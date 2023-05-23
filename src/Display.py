@@ -7,6 +7,20 @@ from typing import Dict
 from curtsies import Input
 
 
+def determine_serial_port() -> str:
+    """ class to determine the serial port """
+    import subprocess
+    dev_name = "/dev/ttyACM1"
+    try:
+        result = subprocess.check_output('ls -l /dev/serial/by-id/',shell=True)
+        result =(result.decode('ascii')).splitlines()
+        for n in range(len(result)):
+            if "MicroPython" in result[n]:
+                dev_name = "/dev/"+ result[n][-7:]
+    except:
+        pass
+    return dev_name
+
 class DisplayButtons(Enum):
     BTN_SELECT = 21
     DO_SELECT = 7  # does solve mostly
@@ -45,7 +59,7 @@ class Output:
 class SerialOutput(Output):
     box: serial.Serial
 
-    def __init__(self, port="/dev/ttyACM0", baudrate=115200) -> None:
+    def __init__(self, port=determine_serial_port(), baudrate=115200) -> None:
         try:
             logging.debug(f"Connecting serial output, {port=}, {baudrate=}")
             self.box = serial.Serial(
@@ -156,3 +170,4 @@ class Display(Output):
         Returns:
         serial.Serial: The box variable"""
         return None
+

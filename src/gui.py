@@ -460,11 +460,13 @@ class EFinderGUI:
         exp_frame = Frame(self.window, bg="black")
         exp_frame.place(x=0, y=100)
         tk.Label(exp_frame, text="Exposure", bg=b_g, fg=f_g).pack(padx=1, pady=1)
-        expRange = self.param.exp_range
+        expRange = [str(x) for x in self.param.exp_range]
+        logging.debug(f"{expRange=}, {type(expRange[0])}")
         for i in range(len(expRange)):
+            logging.debug(f"using text: {str(expRange[i])}, value: {float(expRange[i])}")
             tk.Radiobutton(
                 exp_frame,
-                text=str(expRange[i]),
+                text=expRange[i],
                 bg=b_g,
                 fg=f_g,
                 width=7,
@@ -476,7 +478,7 @@ class EFinderGUI:
             ).pack(padx=1, pady=1)
 
         gain = StringVar()
-        gain.set(str(self.camera_data.gain))
+        gain.set(str(float(self.camera_data.gain)))
         gain_frame = Frame(self.window, bg="black")
         gain_frame.place(x=80, y=100)
         tk.Label(gain_frame, text="Gain", bg=b_g, fg=f_g).pack(padx=1, pady=1)

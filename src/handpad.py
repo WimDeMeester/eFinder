@@ -23,6 +23,9 @@ class Commands:
         self.select = select
         self.longselect = longselect
 
+    def init(cmd):
+        self.__init__(*cmd)
+
 
 class HandPad:
     pos = Pos(x=0, y=0)
@@ -259,17 +262,15 @@ class HandPad:
         self.display_array()
 
     def up_down_inc(self, attribute, i, sign):
-        setattr(
-            self.param,
-            attribute,
-            getattr(self.param, attribute) + self.increment[i] * sign,
-        )
+        self.param[attribute] = self.param[attribute] + self.increment[i] * sign
+        cmd = self.get_current_cmd()
+        cmd.line2 = str(self.param[attribute])
         self.display_array()
         self.update_summary()
         time.sleep(0.1)
 
     def flip(self, attribute):
-        setattr(self.param, attribute, 1 - getattr(self.param, attribute))
+        self.param[attribute] = 1 - self.param[attribute]
         self.display_array()
         self.update_summary()
         time.sleep(0.1)

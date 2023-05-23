@@ -87,6 +87,12 @@ class ParamData:
         else:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
+    def __getitem__(self, key):
+        return self.param[key]
+
+    def __setitem__(self, key, value):
+        self.param[key] = value
+
 
 
 # @define
