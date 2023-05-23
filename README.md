@@ -122,13 +122,19 @@ sudo install asi.rules /lib/udev/rules.d
 
 #### Start eFinder
 
+If Poetry is not installed yet, [Install poetry](https://python-poetry.org/docs/#installation) to manage the python dependencies.
+
+Install the dependencies and the virtual environment (do this once):
+
+`poetry install`
+
 Activate a python virtual environment (do this every time):
 
 `poetry shell`
 
 Run the VNC Gui version of the app:
 
-`python src/eFinderVNCGUI.py`
+`python src/eFinder.py -g`
 
 The headless version can be started using the command:
 
@@ -137,7 +143,7 @@ The headless version can be started using the command:
 Run the VNC Gui version of the app without having a handpad, a camera or a nexus device.
 (The headless version has no command line options at the moment)
 
-`python src/eFinderVNCGUI.py -fh -fn -fc`
+`python src/eFinder.py -fh -fn -fc`
 
 An easier way to start the app is executing **scripts/start.sh** for the headless version and **scripts/startVNCGUI.sh** for the GUI version.
 
@@ -283,7 +289,7 @@ Activate a python virtual environment (do this every time):
 Run the VNC Gui version of the app without having a handpad, a camera or a nexus device.
 (The headless version has no command line options at the moment)
 
-`python src/eFinderVNCGUI.py -fh -fn -fc`
+`python src/eFinder.py -fh -fn -fc -g`
 
 ### Docker
 
