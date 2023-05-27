@@ -163,7 +163,7 @@ class EFinder():
         if not has_solved:
             logging.info("Bad Luck - Solve Failed")
             output.display("Not Solved", "", "")
-            return False, False, "", 0
+            return False, False, "", 0, False
 
         if offset_flag and has_star:
             self.set_offset(star_name)

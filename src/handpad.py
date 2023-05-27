@@ -262,7 +262,9 @@ class HandPad:
         self.display_array()
 
     def up_down_inc(self, attribute, i, sign):
-        self.param[attribute] = self.param[attribute] + self.increment[i] * sign
+        self.param[attribute] = max(0,
+                                    self.param[attribute] + self.increment[i] *
+                                    sign)
         cmd = self.get_current_cmd()
         cmd.line2 = str(self.param[attribute])
         self.display_array()
