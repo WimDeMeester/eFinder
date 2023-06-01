@@ -80,7 +80,7 @@ Make sure the following settings are set on the Network page:
 #### Install OS and needed dependencies
 
 - Download the [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
-- Select the standard 32bit Raspberry Pi OS.
+- Select the standard 64bit Raspberry Pi OS.
 - In the settings, enter *efinder* as username, *efinder* as password, and *efinder.local* as hostname.
 - Start the installation of the OS.
 - Checkout the eFinder software from GitHub
@@ -111,10 +111,12 @@ sudo raspi-config
 - Unpack the SDK:
 
 ```bash
-wget "https://dl.zwoastro.com/software?app=AsiCameraDriverSdk&platform=macIntel&region=Overseas" -O ASI_linux_mac_SDK.tar.bz2
-bunzip2 ASI_linux_mac_SDK.tar.bz2
-tar xvf ASI_linux_mac_SDK.tar
-cd ASI_linux_mac_SDK_V1.27/lib/
+wget "https://dl.zwoastro.com/software?app=AsiCameraDriverSdk&platform=macIntel&region=Overseas" -O ASI_linux_mac_SDK.zip
+unzip ASI_linux_mac_SDK.zip
+mv ASI_Camera_SDK/ASI_linux_mac_SDK_V1.29.tar.bz2 .
+bunzip2 ASI_linux_mac_SDK_V1.29.tar.bz2
+tar xvf ASI_linux_mac_SDK_V1.29.tar
+cd ASI_linux_mac_SDK_V1.29/lib/
 sudo mkdir /lib/zwoasi
 sudo cp -r * /lib/zwoasi/
 sudo install asi.rules /lib/udev/rules.d
@@ -190,7 +192,8 @@ cd rtl8192eu-linux-driver
 
 ```bash
 CONFIG_PLATFORM_I386_PC = n
-CONFIG_PLATFORM_ARM_RPI = y
+CONFIG_PLATFORM_ARM_RPI = n
+CONFIG_PLATFORM_ARM_AARCH64 = y
 ```
 
 - Add and install the driver to DKMS
@@ -210,7 +213,6 @@ echo -e "8192eu\n\nloop" | sudo tee /etc/modules
 - Fix possible plugging/replugging issue and sforce the driver to be active from boot:
 
 ```bash
-echo -e "8192eu\n\nloop" | sudo tee /etc/modules
 echo "options 8192eu rtw_power_mgnt=0 rtw_enusbss=0" | sudo tee /etc/modprobe.d/8192eu.conf;
 ```
 
