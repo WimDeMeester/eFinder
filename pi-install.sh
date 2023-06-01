@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash
 HOME=/home/efinder
 apt-get update && apt -y upgrade
 apt-get install -y netatalk
