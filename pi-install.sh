@@ -11,13 +11,14 @@ apt-get install -y make automake g++ wcslib-dev wcstools # needed for astrometry
 apt-get install -y git pip neovim wget patch # patch is needed to compile fitsio
 apt install -y libcairo2-dev libnetpbm10-dev netpbm libpng-dev libjpeg-dev zlib1g-dev libbz2-dev swig libcfitsio-dev
 cd $HOME
-sudo -u efinder git clone https://github.com/dstndstn/astrometry.net.git
+sudo -u efinder wget https://github.com/dstndstn/astrometry.net/releases/download/0.93/astrometry.net-0.93.tar.gz
+sudo -u efinder tar zxvf astrometry.net-0.93.tar.gz
 sudo -u efinder python3 -m pip install --upgrade pip
 sudo -u efinder -- curl -sSL https://install.python-poetry.org | CARGO_NET_GIT_FETCH_WITH_CLI=true python3 -
 echo 'export PATH="/home/efinder/.local/bin:$PATH"' >> /etc/profile
 source /etc/profile
 # sudo -u efinder pip install numpy==1.22.0
-cd $HOME/astrometry.net
+cd $HOME/astrometry.net-0.93
 make
 make py
 make extra
