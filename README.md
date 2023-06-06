@@ -122,6 +122,13 @@ sudo cp -r * /lib/zwoasi/
 sudo install asi.rules /lib/udev/rules.d
 ```
 
+- For the 64 bit version of the OS, there is a problem with the correct directory. 
+
+```bash
+sudo mv /lib/zwoasi/armv7 /lib/zwoasi/armv7.old
+sudo cp -r /lib/zwoasi/armv8 /lib/zwoasi/armv7
+```
+
 #### Start eFinder
 
 If Poetry is not installed yet, [Install poetry](https://python-poetry.org/docs/#installation) to manage the python dependencies.
