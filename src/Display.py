@@ -10,7 +10,7 @@ from curtsies import Input
 def determine_serial_port() -> str:
     """ class to determine the serial port """
     import subprocess
-    dev_name = "/dev/ttyACM1"
+    dev_name = "/dev/ttyACM0"
     try:
         result = subprocess.check_output('ls -l /dev/serial/by-id/',shell=True)
         result =(result.decode('ascii')).splitlines()
