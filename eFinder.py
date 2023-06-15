@@ -33,8 +33,8 @@ import ASICamera
 import CameraInterface
 
 home_path = str(Path.home())
-version = "17_4"
-#os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
+version = "18_3"
+os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
 increment = [0, 1, 5, 1, 1]
@@ -201,7 +201,7 @@ def deltaCalc():
     arr[0, 3][2] = "time: " + str(elapsed_time)[0:4] + " s"
 
 def align():
-    global align_count, solve, sync_count, param, offset_flag, arr
+    global align_count, solve, sync_count, param, offset_flag, arr, x,y
     new_arr = nexus.read_altAz(arr)
     arr = new_arr
     capture()
@@ -217,34 +217,40 @@ def align():
     if valid == "0":
         print("invalid position")
         handpad.display(arr[x, y][0], "Invalid position", arr[x, y][2])
+        time.sleep(3)
         return
     valid = nexus.get(align_dec)
     print(align_dec)
     if valid == "0":
         print("invalid position")
         handpad.display(arr[x, y][0], "Invalid position", arr[x, y][2])
+        time.sleep(3)
         return
     reply = nexus.get(":CM#")
     print("reply: ", reply)
     p = nexus.get(":GW#")
     print("Align status reply ", p)
-    align_count += 1
-    if p != "AT2":
-        handpad.display(
-            "'select' aligns",
-            "align count: " + str(align_count),
-            "Nexus reply: " + p[0:3],
-        )
-    else:
-        if p == "AT2":
-            sync_count += 1
-            handpad.display(
-                "'select' syncs",
-                "Sync count " + str(sync_count-1),
-                "Nexus reply " + p[0:3],
-            )
-            arr[2:0][1] = "Nexus is aligned"
+    print(nexus.is_aligned())
+    if nexus.is_aligned() == False: # wasnt aligned before this action
+        align_count += 1    
+        if p[1] != "T": # and still not aligned
+            arr[0,4][0] = "'OK' aligns"
+            arr[0,4][1] = "Align count " + str(align_count)
+            arr[0,4][2] = "Nexus reply:" + p[0:3]
+            handpad.display(arr[0,4][0],arr[0,4][1],arr[0,4][2])
+        else: 
+            arr[0,4][0] = "'OK' now syncs"
+            arr[0,4][1] = "Sync count " + str(sync_count)
+            arr[0,4][2] = "Nexus reply:" + p[0:3]
+            arr[2,0][1] = "Nexus is aligned"
+            handpad.display(arr[0,4][0],arr[0,4][1],arr[0,4][2])           
             nexus.set_aligned(True)
+    else:
+        sync_count +=1
+        arr[0,4][0] = "'OK' syncs"
+        arr[0,4][1] = "Sync count " + str(sync_count)
+        arr[0,4][2] = ""
+        handpad.display(arr[0,4][0],arr[0,4][1],arr[0,4][2])
     return
 
 def measure_offset():
@@ -342,7 +348,7 @@ def go_solve():
         return
     x = 0
     y = 3
-    handpad.display(arr[0, 3][0], arr[0, 3][1], arr[0, 3][2])
+    handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
 
 def goto():
     handpad.display("Attempting", "GoTo++", "")
@@ -403,6 +409,23 @@ def reader():
             button = handpad.get_box().readline().decode("ascii").strip("\r\n")
         time.sleep(0.1)
 
+def home_refresh():
+    global x,y
+    while True:
+        if x == 0 and y == 0:
+            time.sleep(1)
+        while x ==0 and y==0:
+            nexus.read_altAz(arr)
+            radec = nexus.get_radec()
+            ra = coordinates.hh2dms(radec[0])
+            dec = coordinates.dd2dms(radec[1])
+            handpad.display('Nexus live',' RA:  '+ra, 'Dec: '+dec)
+            time.sleep(0.5)
+        else:
+            handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
+            time.sleep (0.5)
+            
+
 # main code starts here
 
 handpad = Display.Handpad(version)
@@ -412,7 +435,6 @@ nexus.read()
 param = dict()
 get_param()
 
-handpad.display("ScopeDog eFinder", "Ready", "")
 # array determines what is displayed, computed and what each button does for each screen.
 # [first line,second line,third line, up button action,down...,left...,right...,select button short press action, long press action]
 # empty string does nothing.
@@ -420,14 +442,14 @@ handpad.display("ScopeDog eFinder", "Ready", "")
 # button texts are infact def functions
 p = ""
 home = [
-    "ScopeDog",
-    "eFinder",
-    "ver" + version,
+    "Nexus live",
+    " RA:",
+    "Dec:",
     "",
     "up_down(1)",
     "",
     "left_right(1)",
-    "go_solve()",
+    "align()",
     "",
 ]
 nex = [
@@ -567,6 +589,7 @@ arr = new_arr
 if nexus.is_aligned() == True:
     arr[0, 4][1] = "Nexus is aligned"
     arr[0, 4][0] = "'OK' syncs"
+    arr[2,0][1] = "Nexus is aligned"
 
 if param["Camera Type ('QHY' or 'ASI')"]=='ASI':
     import ASICamera
@@ -575,13 +598,19 @@ elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
     import QHYCamera
     camera = QHYCamera.QHYCamera(handpad)
 
-handpad.display("ScopeDog eFinder", "v" + version, "")
+handpad.display("ScopeDog eFinder", "ver " + version, "")
+time.sleep(3)
 button = ""
 
 scan = threading.Thread(target=reader)
 scan.daemon = True
 scan.start()
-
+'''
+time.sleep(2)
+scan2 = threading.Thread(target=home_refresh)
+scan2.daemon = True
+scan2.start()
+'''
 while True:  # next loop looks for button press and sets display option x,y
     if button == "20":
         exec(arr[x, y][7])
@@ -596,5 +625,17 @@ while True:  # next loop looks for button press and sets display option x,y
     elif button == "17":
         exec(arr[x, y][6])
     button = ""
-    time.sleep(0.1)
+    if x == 0 and y == 0:
+        nexus.read_altAz(arr)
+        radec = nexus.get_radec()
+        if nexus.is_aligned() == True:
+            tick = "T"
+        else:
+            tick = "N"
+        ra = coordinates.hh2dms(radec[0])
+        dec = coordinates.dd2dms(radec[1])
+        handpad.display('Nexus live     '+tick,' RA:  '+ra, 'Dec: '+dec)
+        time.sleep(0.2)
+    else:
+        time.sleep(0.1)
 

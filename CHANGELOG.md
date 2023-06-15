@@ -1,5 +1,10 @@
 # Changelog for eFinder software
 
+## Version 18
+[Keith Venables]
+
+- Show live Nexus coordinates
+
 ## Version 17
 [Keith Venables]
 

@@ -104,7 +104,7 @@ class Nexus:
                 s.send(bytes(txt.encode("ascii")))
                 time.sleep(0.1)
                 res = str(s.recv(16).decode("ascii")).strip("#")
-        print("sent", txt, "got", res, "from Nexus")
+        #print("sent", txt, "got", res, "from Nexus")
         return res
 
     def read(self) -> None:
@@ -134,10 +134,10 @@ class Nexus:
         print("setting pi clock to:", end=" ")
         os.system('sudo date -u --set "%s"' % new_dt + ".000Z")
         p = self.get(":GW#")
-        if p != "AT2#":
+        if p[1] != "T":
             self.handpad.display("Nexus reports", "not aligned yet", "")
         else:
-            self.handpad.display("eFinder ready", "Nexus reports" + p, "")
+            self.handpad.display("eFinder ready", "Nexus report " + p[0:3], "")
             self.aligned = True
         time.sleep(1)
 
@@ -161,21 +161,18 @@ class Nexus:
         self.altaz = self.coordinates.conv_altaz(self, *(self.radec))
         self.scope_alt = self.altaz[0] * math.pi / 180
         self.short = ra[0]+ra[1]+dec[0]+dec[1]
+        '''
         print(
             "Nexus RA:  ",
             self.coordinates.hh2dms(self.radec[0]),
             "  Dec: ",
             self.coordinates.dd2dms(self.radec[1]),
         )
+        '''
         if arr is not None:
             arr[0, 1][0] = "Nex: RA " + self.coordinates.hh2dms(self.radec[0])
             arr[0, 1][1] = "   Dec " + self.coordinates.dd2dms(self.radec[1])
-        p = self.get(":GW#")
-        if p == "AT2#":
-            if arr is not None:
-                arr[0, 4][1] = "Nexus is aligned"
-                arr[0, 4][0] = "'Select' syncs"
-
+        
         if arr is not None:
             return arr
 
