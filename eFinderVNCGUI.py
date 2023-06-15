@@ -726,8 +726,9 @@ def readTarget():
     ra = goto_ra.split(":")
     dec = re.split(r"[:*]", goto_dec)
     print("goto RA & Dec", goto_ra, goto_dec)
-    goto_radec = (float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600), (
-        float(dec[0]) + float(dec[1]) / 60 + float(dec[2]) / 3600
+    goto_radec = (float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600), math.copysign(
+            abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
+            float(dec[0]),
     )
     goto_altaz = coordinates.conv_altaz(nexus, *(goto_radec))
     tk.Label(
@@ -873,17 +874,17 @@ def save_param():
 def do_button(event):
     global handpad, coordinates
     print(button)
-    if button=='21':
+    if button=='20':
         handpad.display('Capturing image','','')
         image()
         handpad.display('Solving image','','')
         solve()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
-    elif button =='17': # up button
+    elif button =='16': # up button
         handpad.display('Performing','  align','')
         align()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'Report:'+p)
-    elif button == '19': # down button
+    elif button == '21': # down button
         handpad.display('Performing','   GoTo++','')
         goto()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
@@ -911,7 +912,7 @@ elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
     import QHYCamera
     camera = QHYCamera.QHYCamera(handpad)
 
-handpad.display('eFinder via VNC','Select: Solves','Up:Align Dn:GoTo',)
+handpad.display('eFinder via VNC','OK: Solve/GoTo','Up:Align',)
 # main program loop, using tkinter GUI
 window = tk.Tk()
 window.title("ScopeDog eFinder v" + version)

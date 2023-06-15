@@ -1,5 +1,8 @@
 # Changelog for eFinder software
 
+## Version 17
+[Keith Venables]
+
 ## Version 16_3_1
 [Keith Venables]
 
@@ -38,11 +41,9 @@
 
 ## Version 14
 [Keith Venables]
-- Fixed a bug on the handpad version whereby in the final 'status' screen, use of the up or down buttons crashed the code.
-
 - Fixed a bug that prevents handpad saved exposure & gain preferences from being displayed on the GUI.
 
-- Modified how the handpad display starts when using the GUI version.
+- Modified how the handpad display starts when using the GUI version. 
 
 - Fixed a bug on the handpad version whereby a failed solve could result in the previous delta being displayed without a 'failed solve' warning
 

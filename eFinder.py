@@ -33,8 +33,8 @@ import ASICamera
 import CameraInterface
 
 home_path = str(Path.home())
-version = "16_3"
-# os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
+version = "17_4"
+#os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
 increment = [0, 1, 5, 1, 1]
@@ -45,7 +45,6 @@ star_name = "no star"
 solve = False
 sync_count = 0
 pix_scale = 15
-
 
 def xy2rd(x, y):  # returns the RA & Dec equivalent to a camera pixel x,y
     result = subprocess.run(
@@ -66,10 +65,7 @@ def xy2rd(x, y):  # returns the RA & Dec equivalent to a camera pixel x,y
     ra, dec = re.findall("[-,+]?\d+\.\d+", line)
     return (float(ra), float(dec))
 
-
-def pixel2dxdy(
-    pix_x, pix_y
-):  # converts a pixel position, into a delta angular offset from the image centre
+def pixel2dxdy(pix_x, pix_y):  # converts a pixel position, into a delta angular offset from the image centre
     deg_x = (float(pix_x) - 640) * pix_scale / 3600  # in degrees
     deg_y = (480 - float(pix_y)) * pix_scale / 3600
     dxstr = "{: .1f}".format(float(60 * deg_x))  # +ve if finder is left of Polaris
@@ -78,7 +74,6 @@ def pixel2dxdy(
     )  # +ve if finder is looking below Polaris
     return (deg_x, deg_y, dxstr, dystr)
 
-
 def dxdy2pixel(dx, dy):
     pix_x = dx * 3600 / pix_scale + 640
     pix_y = 480 - dy * 3600 / pix_scale
@@ -86,14 +81,12 @@ def dxdy2pixel(dx, dy):
     dystr = "{: .1f}".format(float(60 * dy))  # +ve if finder is looking below Polaris
     return (pix_x, pix_y, dxstr, dystr)
 
-
 def imgDisplay():  # displays the captured image on the Pi desktop.
     for proc in psutil.process_iter():
         if proc.name() == "display":
             proc.kill()  # delete any previous image display
     im = Image.open(home_path + "/Solver/images/capture.jpg")
     im.show()
-
 
 def solveImage():
     global offset_flag, solve, solvedPos, elapsed_time, star_name, star_name_offset, solved_radec, solved_altaz
@@ -133,9 +126,8 @@ def solveImage():
         "none",  # Don't generate .corr files
         "--rdls",
         "none",  # Don't generate the point list
-        "--temp-axy",  # We can't specify not to create the axy list, but we can write it to /tmp
-    ]
-
+    ]    
+    #    "--temp-axy",  # We can't specify not to create the axy list, but we can write it to /tmp
     cmd = ["solve-field"]
     captureFile = home_path + "/Solver/images/capture.jpg"
     options = (
@@ -175,11 +167,11 @@ def solveImage():
     solve = True
     deltaCalc()
 
-
 def applyOffset():
     x_offset, y_offset, dxstr, dystr = dxdy2pixel(
         float(param["d_x"]), float(param["d_y"])
     )
+    print('applied_offset_pixels x,y',x_offset,y_offset)
     ra, dec = xy2rd(x_offset, y_offset)
     solved = Star(
         ra_hours=ra / 15, dec_degrees=dec
@@ -188,7 +180,6 @@ def applyOffset():
         nexus.get_location().at(coordinates.get_ts().now()).observe(solved)
     )  # now at Jnow and current location
     return solvedPos_scope
-
 
 def deltaCalc():
     global deltaAz, deltaAlt, elapsed_time
@@ -208,7 +199,6 @@ def deltaCalc():
     arr[0, 3][0] = "Delta: x= " + deltaXstr
     arr[0, 3][1] = "       y= " + deltaYstr
     arr[0, 3][2] = "time: " + str(elapsed_time)[0:4] + " s"
-
 
 def align():
     global align_count, solve, sync_count, param, offset_flag, arr
@@ -250,12 +240,12 @@ def align():
             sync_count += 1
             handpad.display(
                 "'select' syncs",
-                "Sync count " + str(align_count),
+                "Sync count " + str(sync_count-1),
                 "Nexus reply " + p[0:3],
             )
+            arr[2:0][1] = "Nexus is aligned"
             nexus.set_aligned(True)
     return
-
 
 def measure_offset():
     global offset_str, offset_flag, param, scope_x, scope_y, star_name
@@ -269,28 +259,26 @@ def measure_offset():
         return
     scope_x = star_name_offset[0]
     scope_y = star_name_offset[1]
+    print('pixel_offset x,y',star_name_offset)
     d_x, d_y, dxstr, dystr = pixel2dxdy(scope_x, scope_y)
     param["d_x"] = d_x
     param["d_y"] = d_y
     save_param()
     offset_str = dxstr + "," + dystr
-    arr[0, 5][1] = "new " + offset_str
-    arr[0, 6][1] = "new " + offset_str
-    handpad.display(arr[0, 5][0], arr[0, 5][1], star_name + " found")
+    arr[2, 1][1] = "new " + offset_str
+    arr[2, 2][1] = "new " + offset_str
+    handpad.display(arr[2, 1][0], arr[2, 1][1], star_name + " found")
     offset_flag = False
-
 
 def up_down(v):
     global x
     x = x + v
     handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
 
-
 def left_right(v):
     global y
     y = y + v
     handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
-
 
 def up_down_inc(i, sign):
     global increment
@@ -309,13 +297,13 @@ def flip():
     update_summary()
     time.sleep(0.1)
 
-
 def update_summary():
     global param
-    arr[1, 0][0] = "Ex:" + str(param["Exposure"]) + "  Gn:" + str(param["Gain"])
+    arr[1, 0][0] = (
+        "Ex:" + str(param["Exposure"]) + "  Gn:" + str(param["Gain"])
+    )
     arr[1, 0][1] = "Test mode:" + str(param["Test mode"])
     save_param()
-
 
 def capture():
     global param
@@ -338,7 +326,6 @@ def capture():
         polaris_cap,
     )
 
-
 def go_solve():
     global x, y, solve, arr
     new_arr = nexus.read_altAz(arr)
@@ -357,7 +344,6 @@ def go_solve():
     y = 3
     handpad.display(arr[0, 3][0], arr[0, 3][1], arr[0, 3][2])
 
-
 def goto():
     handpad.display("Attempting", "GoTo++", "")
     goto_ra = nexus.get(":Gr#")
@@ -365,6 +351,7 @@ def goto():
         goto_ra[0:2] == "00" and goto_ra[3:5] == "00"
     ):  # not a valid goto target set yet.
         print("no GoTo target")
+        handpad.display("no GoTo target","set yet","")
         return
     goto_dec = nexus.get(":Gd#")
     print("Target goto RA & Dec", goto_ra, goto_dec)
@@ -379,17 +366,15 @@ def goto():
     time.sleep(5)  # replace with a check on goto progress
     go_solve()
 
-
 def reset_offset():
     global param, arr
     param["d_x"] = 0
     param["d_y"] = 0
     offset_str = "0,0"
-    arr[0, 5][1] = "new " + offset_str
-    arr[0, 6][1] = "new " + offset_str
+    arr[2,1][1] = "new " + offset_str
+    arr[2,2][1] = "new " + offset_str
     handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
     save_param()
-
 
 def get_param():
     global param, offset_str
@@ -408,9 +393,8 @@ def save_param():
     global param
     with open(home_path + "/Solver/eFinder.config", "w") as h:
         for key, value in param.items():
-            # print("%s:%s\n" % (key, value))
+            #print("%s:%s\n" % (key, value))
             h.write("%s:%s\n" % (key, value))
-
 
 def reader():
     global button
@@ -419,10 +403,8 @@ def reader():
             button = handpad.get_box().readline().decode("ascii").strip("\r\n")
         time.sleep(0.1)
 
-
 # main code starts here
 
-# time.sleep(1)
 handpad = Display.Handpad(version)
 coordinates = Coordinates.Coordinates()
 nexus = Nexus.Nexus(handpad, coordinates)
@@ -461,7 +443,7 @@ nex = [
 ]
 sol = [
     "No solution yet",
-    "'select' solves",
+    "'OK' solves",
     "",
     "",
     "",
@@ -472,7 +454,7 @@ sol = [
 ]
 delta = [
     "Delta: No solve",
-    "'select' solves",
+    "'OK' solves",
     "",
     "",
     "",
@@ -482,18 +464,18 @@ delta = [
     "goto()",
 ]
 aligns = [
-    "'Select' aligns",
+    "'OK' aligns",
     "not aligned yet",
     str(p),
     "",
     "",
     "left_right(-1)",
-    "left_right(1)",
+    "",
     "align()",
     "",
 ]
 polar = [
-    "'Select' Polaris",
+    "'OK' Bright Star",
     offset_str,
     "",
     "",
@@ -504,17 +486,17 @@ polar = [
     "",
 ]
 reset = [
-    "'Select' Resets",
+    "'OK' Resets",
     offset_str,
     "",
     "",
     "",
     "left_right(-1)",
-    "",
+    "left_right(1)",
     "reset_offset()",
     "",
 ]
-summary = ["", "", "", "up_down(-1)", "", "", "left_right(1)", "go_solve()", ""]
+summary = ["", "", "", "up_down(-1)", "up_down(1)", "", "left_right(1)", "go_solve()", ""]
 exp = [
     "Exposure",
     param["Exposure"],
@@ -544,7 +526,7 @@ mode = [
     "flip()",
     "flip()",
     "left_right(-1)",
-    "left_right(1)",
+    "",
     "go_solve()",
     "goto()",
 ]
@@ -552,18 +534,29 @@ status = [
     "Nexus via " + nexus.get_nexus_link(),
     "Nex align " + str(nexus.is_aligned()),
     "Brightness",
+    "up_down(-1)",
     "",
     "",
-    "left_right(-1)",
-    "",
+    "left_right(1)",
     "go_solve()",
     "goto()",
 ]
-
+bright = [
+    "Handpad",
+    "Display",
+    "Bright Adj",
+    "",
+    "",
+    "left_right(-1)",
+    "refresh()",
+    "go_solve()",
+    "goto()",
+]
 arr = np.array(
     [
-        [home, nex, sol, delta, aligns, polar, reset],
-        [summary, exp, gn, mode, status, status, status],
+        [home, nex, sol, delta, aligns],
+        [summary, exp, gn, mode, mode],
+        [status, polar, reset, bright, bright],
     ]
 )
 update_summary()
@@ -573,38 +566,35 @@ new_arr = nexus.read_altAz(arr)
 arr = new_arr
 if nexus.is_aligned() == True:
     arr[0, 4][1] = "Nexus is aligned"
-    arr[0, 4][0] = "'Select' syncs"
+    arr[0, 4][0] = "'OK' syncs"
 
-if param["Camera Type ('QHY' or 'ASI')"] == "ASI":
+if param["Camera Type ('QHY' or 'ASI')"]=='ASI':
     import ASICamera
-
     camera = ASICamera.ASICamera(handpad)
-elif param["Camera Type ('QHY' or 'ASI')"] == "QHY":
+elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
     import QHYCamera
-
     camera = QHYCamera.QHYCamera(handpad)
-
 
 handpad.display("ScopeDog eFinder", "v" + version, "")
 button = ""
-# main program loop, scan buttons and refresh display
 
 scan = threading.Thread(target=reader)
 scan.daemon = True
 scan.start()
 
 while True:  # next loop looks for button press and sets display option x,y
-    if button == "21":
+    if button == "20":
         exec(arr[x, y][7])
-    elif button == "20":
+    elif button == "21":
         exec(arr[x, y][8])
-    elif button == "19":
-        exec(arr[x, y][4])
-    elif button == "17":
-        exec(arr[x, y][3])
-    elif button == "16":
-        exec(arr[x, y][5])
     elif button == "18":
+        exec(arr[x, y][4])
+    elif button == "16":
+        exec(arr[x, y][3])
+    elif button == "19":
+        exec(arr[x, y][5])
+    elif button == "17":
         exec(arr[x, y][6])
     button = ""
     time.sleep(0.1)
+
