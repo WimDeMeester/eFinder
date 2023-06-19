@@ -34,19 +34,20 @@ As I live in Belgium, this section is very Europe-centric.  I ordered the ASI ca
 | Ordered    | Product                                                                                                                                                                                    | Company           | Amount   | Arrival   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | -------- | ---------- |
 | 03/08/2022 | Software                                                                                                                                                                                   | Keith Venables    | 26.98 €  | 03/08/2022 |
-| 03/08/2022 | [ASI120MM-S](https://www.teleskop-express.de/shop/product_info.php/info/p7109)                                                                                                             | Teleskop Service  | 248.51 € | 11/08/2022           |
-| 03/08/2022 | [Raspberry Pi 4 model B - 4GB](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-v4/228-raspberry-pi-4b4gb-765756931182.html?search_query=Raspberry+Pi+4+model+B+-+4GB&results=203) | Raspberrystore.nl | 74.95 €  | 10/08/2022           |
-| 03/08/2022 | [Raspberry Pi Pico](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/312-raspberry-pi-pico-0617588405587.html?search_query=Raspberry+Pi+4+Pico&results=203)                   | Raspberrystore.nl | 3.99 €   | 10/08/2022           |
-| 03/08/2022 | [2 x 1x40 header](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/320-soldeerpennen-1x40-voor-de-raspberry-pi-pico.html?search_query=1x40+header&results=44)                 | Raspberrystore.nl | 2.00 €   | 10/08/2022           |
-| 03/08/2022 | Verzendkosten Astroberrystore.nl                                                                                                                                                           | Raspberrystore.nl | 12.74 €  | 10/08/2022           |
-| 03/08/2022 | [2.23 OLED Display Module for Raspberry Pi Pico](https://www.amazon.nl/gp/product/B093SYSX5S/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1)                                                 | Amazon (.nl)      | 20.99 €  | 09/08/2022          |
-| 03/08/2022 | [Geekworm Raspberry Pi 4 Aluminum Case](https://www.amazon.nl/gp/product/B07ZVJDRF3/ref=ppx_od_dt_b_asin_title_s01?ie=UTF8&psc=1)                                                          | Amazon (.nl)      | 14.89 €  | 08/08/2022           |
-| 03/08/2022 | [Sandisk Ultra 32 GB microSDHC](https://www.amazon.nl/gp/product/B08GY9NYRM/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                  | Amazon (.nl)      | 8.01 €   | 08/08/2022           |
-| 03/08/2022 | [100 x 60 x 25 mm DIY box](https://www.amazon.nl/gp/product/B07V2Q32H8/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                       | Amazon (.nl)      | 10.62 €  | 08/08/2022           |
-| 03/08/2022 | [Lon0167  Momentary Circuit Control Tactile Tact Push Button Switch](https://www.amazon.nl/gp/product/B0842JYXC8/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1)                         | Amazon (.nl)      | 11.31 €  | 16/08/2022           |
-| 03/08/2022 | [50 mm F1.8 CCTV-lens for C-mount](https://www.amazon.nl/gp/product/B08BF7DRXR/ref=ppx_yo_dt_b_asin_title_o02_s00?ie=UTF8&psc=1)                                                           | Amazon (.nl)      | 48.38 €  | 16/08/2022           |
-| 10/10/2022 | [TP-Link 300 Mbps Wifi USB-adapter (TL-WN823N)](https://www.amazon.nl/dp/B0088TKTY2/ref=pe_28126711_487805961_TE_item)                                                                     | Amazon (.nl)      | 9.95 €  | 11/10/2022           |
-|Total      |                                                                                                                                                                                            |                   | 493.32 € |            |
+| 03/08/2022 | [ASI120MM-S](https://www.teleskop-express.de/shop/product_info.php/info/p7109)                                                                                                             | Teleskop Service  | 248.51 € | 11/08/2022 |
+| 03/08/2022 | [Raspberry Pi 4 model B - 4GB](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-v4/228-raspberry-pi-4b4gb-765756931182.html?search_query=Raspberry+Pi+4+model+B+-+4GB&results=203) | Raspberrystore.nl | 74.95 €  | 10/08/2022 |
+| 03/08/2022 | [Raspberry Pi Pico](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/312-raspberry-pi-pico-0617588405587.html?search_query=Raspberry+Pi+4+Pico&results=203)                   | Raspberrystore.nl | 3.99 €   | 10/08/2022 |
+| 03/08/2022 | [2 x 1x40 header](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/320-soldeerpennen-1x40-voor-de-raspberry-pi-pico.html?search_query=1x40+header&results=44)                 | Raspberrystore.nl | 2.00 €   | 10/08/2022 |
+| 03/08/2022 | Verzendkosten Astroberrystore.nl                                                                                                                                                           | Raspberrystore.nl | 12.74 €  | 10/08/2022 |
+| 03/08/2022 | [2.23 OLED Display Module for Raspberry Pi Pico](https://www.amazon.nl/gp/product/B093SYSX5S/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1)                                                 | Amazon (.nl)      | 20.99 €  | 09/08/2022 |
+| 03/08/2022 | [Geekworm Raspberry Pi 4 Aluminum Case](https://www.amazon.nl/gp/product/B07ZVJDRF3/ref=ppx_od_dt_b_asin_title_s01?ie=UTF8&psc=1)                                                          | Amazon (.nl)      | 14.89 €  | 08/08/2022 |
+| 03/08/2022 | [Sandisk Ultra 32 GB microSDHC](https://www.amazon.nl/gp/product/B08GY9NYRM/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                  | Amazon (.nl)      | 8.01 €   | 08/08/2022 |
+| 03/08/2022 | [100 x 60 x 25 mm DIY box](https://www.amazon.nl/gp/product/B07V2Q32H8/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                       | Amazon (.nl)      | 10.62 €  | 08/08/2022 |
+| 03/08/2022 | [Lon0167  Momentary Circuit Control Tactile Tact Push Button Switch](https://www.amazon.nl/gp/product/B0842JYXC8/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1)                         | Amazon (.nl)      | 11.31 €  | 16/08/2022 |
+| 03/08/2022 | [50 mm F1.8 CCTV-lens for C-mount](https://www.amazon.nl/gp/product/B08BF7DRXR/ref=ppx_yo_dt_b_asin_title_o02_s00?ie=UTF8&psc=1)                                                           | Amazon (.nl)      | 48.38 €  | 16/08/2022 |
+| 10/10/2022 | [TP-Link 300 Mbps Wifi USB-adapter (TL-WN823N)](https://www.amazon.nl/dp/B0088TKTY2/ref=pe_28126711_487805961_TE_item)                                                                     | Amazon (.nl)      | 9.95 €   | 11/10/2022 |
+| 12/06/2023 | [D-link DWR-932 Router](https://www.amazon.com.be/dp/B00OVJDCQ0/ref=pe_43847721_689504491_TE_item)                                                                                         | Amazon (.com.be)  | 54.93 €  | 15/06/2023 |
+|Total      |                                                                                                                                                                                             |                   | 548.25 € |            |
 
 ## Nexus DSC Pro
 
@@ -64,6 +65,10 @@ As I live in Belgium, this section is very Europe-centric.  I ordered the ASI ca
 
 ### Network settings on the Nexus DSC Pro
 
+The network on the Nexus DSC Pro has some problems and does not work very reliable.  The Nexus DSC works without a problem.  If you want to use the Access Point mode on the Nexus DSC Pro, use the following settings:
+
+#### Use the Nexus DSC Pro as Access Point
+
 Make sure the following settings are set on the Network page:
 
 - WiFi Mode: Access Point
@@ -71,6 +76,21 @@ Make sure the following settings are set on the Network page:
 - SSID: Name the network
 - Password: Select a password or leave blank
 - Channel: 6 (The channel needs to be 6 to be able to connect the eFinder, a VNC client, and SkySafari on a tablet)
+- Protocol: LX200 (ServoCAT will not connect with the eFinder)
+
+#### Use the Nexus DSC Pro as client
+
+This is the more reliable configuration.  I use the D-link DWR-932 portable router. 
+
+Make sure the following settings are set on the Network page:
+
+- WiFi Mode: Infrastructure
+- SSID: the name of the D-link router network
+- Password: Select the password
+- Channel: 6
+- IP address: 192.168.0.19
+- Mask: 255.255.255.0
+- Gateway: 192.168.0.1
 - Protocol: LX200 (ServoCAT will not connect with the eFinder)
 
 ## Software
