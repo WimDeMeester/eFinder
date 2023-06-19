@@ -33,7 +33,7 @@ import threading
 from functools import partial
 
 
-version_string = "17_0"
+version_string = "19_0"
 
 def update_sidereal(gui):
     gui.sidereal()

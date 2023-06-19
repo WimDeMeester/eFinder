@@ -1,6 +1,6 @@
 # Changelog for eFinder software
 
-## Version 17.0
+## Version 19.0
 
 [Mike Rosseel]
 

@@ -10,7 +10,8 @@ from Coordinates import Coordinates
 import logging
 from skyfield.api import wgs84
 from NexusInterface import NexusInterface
-
+from common import ParamData
+from pathlib import Path
 
 class NexusConnection():
     def write(self, txt: str):
@@ -69,7 +70,9 @@ class NexusUSBSerialConnection(NexusConnection):
 class NexusSocketConnection(NexusConnection):
     def __init__(self, output: Output):
         self.output = output
-        self.HOST = "10.0.0.1"
+        cwd_path = Path.cwd()
+        self.param: ParamData = ParamData.load_param(cwd_path)
+        self.HOST = self.param.nexus_address
         self.PORT = 4060
         self.connected = False
         try:
@@ -89,7 +92,7 @@ class NexusSocketConnection(NexusConnection):
                 time.sleep(1)
                 self.nexus_link = "Wifi"
         except Exception as e:
-            logging.debug(f"no USB or Wifi link to Nexus: {e}")
+            logging.debug(f"no USB or Wifi link to Nexus.  Make sure to set the correct IP address in the eFinder.config file!  {e}")
 
     def write(self, txt: str):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
