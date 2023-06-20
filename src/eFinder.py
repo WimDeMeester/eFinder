@@ -55,7 +55,7 @@ def main(cli_data: CLIData):
     output = SerialOutput() if cli_data.real_handpad else PrintOutput()
     handpad = HandPad(output, version_string, param)
     coordinates = Coordinates()
-    nexus: NexusInterface = Nexus(output, coordinates) if cli_data.real_nexus else NexusDebug(output, coordinates)
+    nexus: NexusInterface = Nexus(output, coordinates, param) if cli_data.real_nexus else NexusDebug(output, coordinates)
     common = Common(cwd_path=cwd_path,
                     images_path=cli_data.images_path,
                     pix_scale=pix_scale,

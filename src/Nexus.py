@@ -68,11 +68,9 @@ class NexusUSBSerialConnection(NexusConnection):
 
 
 class NexusSocketConnection(NexusConnection):
-    def __init__(self, output: Output):
-        self.output = output
-        cwd_path = Path.cwd()
-        self.param: ParamData = ParamData.load_param(cwd_path)
-        self.HOST = self.param.nexus_address
+    def __init__(self, output: Output, param: ParamData):
+        self.HOST = param.nexus_address
+        print (self.HOST)
         self.PORT = 4060
         self.connected = False
         try:
@@ -113,7 +111,7 @@ class NexusSocketConnection(NexusConnection):
 class Nexus(NexusInterface):
     """The Nexus utility class"""
 
-    def __init__(self, output: Output, coordinates: Coordinates) -> None:
+    def __init__(self, output: Output, coordinates: Coordinates, param: ParamData) -> None:
         """Initializes the Nexus DSC
 
         Parameters:
@@ -121,6 +119,7 @@ class Nexus(NexusInterface):
         coordinates (Coordinates): The coordinates utility class to be used in the eFinder
         """
         self.output = output
+        self.param = param
         self.aligned = False
         self.coordinates = coordinates
         self.NexStr = "not connected"
@@ -130,7 +129,7 @@ class Nexus(NexusInterface):
 
         connection = NexusUSBSerialConnection(output)
         if not connection.connected:
-            connection = NexusSocketConnection(output)
+            connection = NexusSocketConnection(output, self.param)
         if not connection.connected:
             logging.info("no USB or Wifi link to Nexus")
             output.display("Nexus not found", "", "")
