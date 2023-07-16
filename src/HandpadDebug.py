@@ -39,3 +39,4 @@ class HandpadDebug():
         Returns:
         bool: True is the handbox is an OLED"""
         return self.module
+

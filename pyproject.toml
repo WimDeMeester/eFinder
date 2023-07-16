@@ -16,9 +16,8 @@ tk = "^0.1.0"
 pyserial = "^3.5"
 zwoasi = "^0.1.0.1"
 argparse = "^1.4.0"
-
-[tool.poetry.group.dev.dependencies]
-#serial = "^0.0.97"
+curtsies = "^0.4.1"
+oyaml = "^1.0"
 
 [build-system]
 requires = ["poetry-core"]

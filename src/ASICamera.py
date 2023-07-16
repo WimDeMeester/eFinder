@@ -3,11 +3,9 @@ from shutil import copyfile
 import time
 from CameraInterface import CameraInterface
 import zwoasi as asi
-import Display
+from Display import Display
 from typing import Dict
 import logging
-import utils
-import sys
 
 
 class ASICamera(CameraInterface):
@@ -16,33 +14,33 @@ class ASICamera(CameraInterface):
     def __init__(
         self,
         handpad: Display,
-        images_path=Path("/dev/shm/images"),
-        home_path=Path.cwd(),
+        images_path: Path,
+        home_path: Path = Path.cwd(),
     ) -> None:
         """Initializes the ASI camera
 
         Parameters:
-        handpad (Display): The link to the handpad"""
+        handpad (Display): The link to the handpad
+        images_path (Path): The path where captured images will be stored
+        home_path (Path): The home path for the camera"""
 
+        self.camType = "ZWO"
         self.handpad = handpad
-        self.images_path: Path = images_path
+        self.images_path = images_path
         self.home_path: Path = home_path
-        self.stills_path: Path = home_path / "Stills"
-        utils.create_path(self.stills_path)  # create stills dir if not already therew
+        self.stills_path: Path = home_path.joinpath("Stills")
+        self.stills_path.mkdir(exist_ok=True)  # create stills dir if not already therew
 
         # find a camera
-        asi.init("/lib/zwoasi/armv7/libASICamera2.so")
-        num_cameras = asi.get_num_cameras()
+        asi.init("/lib/zwoasi/armv7/libASICamera2.so")  # Initialize the ASI library
+        num_cameras = asi.get_num_cameras()  # Get the number of connected cameras
         if num_cameras == 0:
             self.handpad.display("Error:", " no camera found", "")
             self.camType = "not found"
             logging.info("camera not found")
             time.sleep(1)
-            sys.exit()
         else:
-            self.camType = "ZWO"
-            cameras_found = asi.list_cameras()
-            camera_id = 0
+            asi.list_cameras()
             self.initialize()
             self.handpad.display("ZWO camera found", "", "")
             logging.info("ZWO camera found")
@@ -50,20 +48,20 @@ class ASICamera(CameraInterface):
 
     def initialize(self) -> None:
         """Initializes the camera and set the needed control parameters"""
-        global camera
         if self.camType == "not found":
             return
-        camera = asi.Camera(0)
-        camera.set_control_value(
-            asi.ASI_BANDWIDTHOVERLOAD, camera.get_controls()["BandWidth"]["MinValue"]
+        self.camera = asi.Camera(0)  # Initialize the camera
+        self.camera.set_control_value(
+            asi.ASI_BANDWIDTHOVERLOAD,
+            self.camera.get_controls()["BandWidth"]["MinValue"],
         )
-        camera.disable_dark_subtract()
-        camera.set_control_value(asi.ASI_WB_B, 99)
-        camera.set_control_value(asi.ASI_WB_R, 75)
-        camera.set_control_value(asi.ASI_GAMMA, 50)
-        camera.set_control_value(asi.ASI_BRIGHTNESS, 50)
-        camera.set_control_value(asi.ASI_FLIP, 0)
-        camera.set_image_type(asi.ASI_IMG_RAW8)
+        self.camera.disable_dark_subtract()
+        self.camera.set_control_value(asi.ASI_WB_B, 99)
+        self.camera.set_control_value(asi.ASI_WB_R, 75)
+        self.camera.set_control_value(asi.ASI_GAMMA, 50)
+        self.camera.set_control_value(asi.ASI_BRIGHTNESS, 50)
+        self.camera.set_control_value(asi.ASI_FLIP, 0)
+        self.camera.set_image_type(asi.ASI_IMG_RAW8)
 
     def capture(
         self, exposure_time: float, gain: float, radec: str, extras: Dict
@@ -74,24 +72,18 @@ class ASICamera(CameraInterface):
         exposure_time (float): The exposure time in seconds
         gain (float): The gain
         radec (str): The Ra and Dec
-        m13 (bool): True if the example image of M13 should be used
-        polaris (bool): True if the example image of Polaris should be used
-        """
+        extras (Dict): Additional parameters, this parameter is not used for a real camera"""
         if self.camType == "not found":
             self.handpad.display("camera not found", "", "")
             return
 
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        camera.set_control_value(asi.ASI_GAIN, gain)
-        camera.set_control_value(asi.ASI_EXPOSURE, exposure_time)  # microseconds
-        capture_path = self.images_path / "capture.jpg"
-        camera.capture(filename=capture_path)
-        copyfile(
-            capture_path,
-            self.stills_path / f"{timestr}_{radec}.jpg",
-        )
-
-        return
+        self.camera.set_control_value(asi.ASI_GAIN, gain)
+        self.camera.set_control_value(asi.ASI_EXPOSURE, exposure_time)  # microseconds
+        capture_path = self.images_path.joinpath("capture.jpg")
+        self.camera.capture(filename=str(capture_path))
+        destination_path = self.stills_path.joinpath(f"{timestr}_{radec}.jpg")
+        copyfile(str(capture_path), str(destination_path))
 
     def get_cam_type(self) -> str:
         """Return the type of the camera
