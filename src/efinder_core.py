@@ -78,7 +78,7 @@ class EFinder():
             cmd = self.handpad.get_current_cmd()
             if not self.astro_data.solved:
                 output.display(cmd.line1, "Solved Failed", cmd.line3)
-                return
+                return "Solved Failed", None
             align_ra = ":Sr" + \
                 self.coordinates.dd2dms((self.astro_data.solved_radec)[0]) + "#"
             align_dec = ":Sd" + \
@@ -107,7 +107,7 @@ class EFinder():
             self.astro_data.align_count += 1
         except Exception as ex:
             logging.error(ex)
-            return "Nexus error"
+            return "Nexus error", None
         if p != "AT2":
             output.display(
                 "'select' aligns",

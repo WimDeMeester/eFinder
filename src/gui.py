@@ -135,7 +135,7 @@ class EFinderGUI:
     #         )
 
     def solve_image_failed(self, b_g=None, f_g=None):
-        self.box_write("Solve Failed", True)
+        self.box_write("Solve Failed")
         if b_g is None or f_g is None:
             b_g = self.b_g
             f_g = self.f_g
@@ -335,7 +335,7 @@ class EFinderGUI:
         self.image_show()
 
         if not success:
-            self.box_write("solve failed", True)
+            self.box_write("solve failed")
             logging.debug("solve failed")
             return
 
@@ -979,7 +979,7 @@ class EFinderGUI:
             fg=self.f_g,
         ).place(x=20, y=600)
         tk.Label(
-            self.window, text="Nexus report: " + p[0:3], bg=self.b_g, fg=self.f_g
+            self.window, text=f"Nexus report: {p[0:3] if p else 'None'}", bg=self.b_g, fg=self.f_g
         ).place(x=20, y=620)
         self.update_nexus_GUI()
         self.deltaCalcGUI()
@@ -1005,11 +1005,11 @@ class EFinderGUI:
             solved_radec,
         ) = self.efinder.solveImage()
         self.show_elapsed_time(elapsed_time)
-        self.show_solved_coordinates(solved_radec)
 
         if not solved:
-            solve_image_failed(b_g, f_g)
+            self.solve_image_failed()
             return
+        self.show_solved_coordinates(solved_radec)
         logging.debug(f"Found star is {star_name}")
         if star_name == "":
             self.box_write(" no named star")
@@ -1025,13 +1025,13 @@ class EFinderGUI:
         self.readTarget()  # reads goto_ra and goto_dec
         self.efinder.align()  # local sync scope to true RA & Dec
         if solved == False:
-            eFinderGUI.box_write("solve failed", True)
+            eFinderGUI.box_write("solve failed")
             return
         self.astro_data.nexus.write(":Sr" + goto_ra + "#")
         self.astro_data.nexus.write(":Sd" + goto_dec + "#")
         reply = self.astro_data.nexus.get(":MS#")
         time.sleep(0.1)
-        self.box_write("moving scope", True)
+        self.box_write("moving scope")
 
     # UI only method
     def move(self):
