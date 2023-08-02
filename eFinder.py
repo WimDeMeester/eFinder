@@ -430,10 +430,10 @@ def home_refresh():
 
 handpad = Display.Handpad(version)
 coordinates = Coordinates.Coordinates()
-nexus = Nexus.Nexus(handpad, coordinates)
-nexus.read()
 param = dict()
 get_param()
+nexus = Nexus.Nexus(handpad, coordinates, param["nexus_address"])
+nexus.read()
 
 # array determines what is displayed, computed and what each button does for each screen.
 # [first line,second line,third line, up button action,down...,left...,right...,select button short press action, long press action]
