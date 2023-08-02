@@ -31,13 +31,19 @@
 
 ## Source code
 
-- The source code can be found at [google drive](https://drive.google.com/drive/folders/1GnNv5xhHqUr66mJKaSsVWqEgyuoLcbI8).
+- The source code can be downloaded from [GitHub](https://github.com/WimDeMeester/eFinder/releases/latest).
 
 ## Needed parts
 
 ### Purchase of the hardware
 
-As I live in Belgium, this section is very Europe-centric.  I ordered the ASI camera at Teleskop Service (Germany) and the rest in the Netherlands.
+In the following list, you can see which hardware is needed to construct a working eFinder. 
+
+The Nexus DSC Pro cannot connect directly over WiFi to more than one machine (e.g. the eFinder and a tablet running SkySafari). To solve this, you can use an external router. The D-Link router is not needed if you use the Nexus DSC, as the problem does not occur on the Nexus DSC.
+
+The Raspberry Pi has a poor WiFi connection when it is in a case. To improve the connection, you can add an external WiFi adapter. The TP-Link adapter is a good option. Instructions on how to set up the adapter are provided later in this document.
+
+Since I live in Belgium, this section is focused on European suppliers.  I purchased the ASI camera at Teleskop Service in Germany, and the rest of the components from suppliers in the Netherlands (Raspberrystore) or Amazon.
 
 | Ordered    | Product                                                                                                                                                                                    | Company           | Amount   | Arrival    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | -------- | ---------- |
