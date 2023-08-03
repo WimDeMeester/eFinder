@@ -4,6 +4,10 @@
   - [Source code](#source-code)
   - [Needed parts](#needed-parts)
     - [Purchase of the hardware](#purchase-of-the-hardware)
+  - [eFinder hardware configurations](#efinder-hardware-configurations)
+    - [Nexus DSC Pro, using SkySafari](#nexus-dsc-pro-using-skysafari)
+    - [Nexus DSC, using SkySafari if required](#nexus-dsc-using-skysafari-if-required)
+    - [Nexus DSC Pro, without using SkySafari](#nexus-dsc-pro-without-using-skysafari)
   - [Nexus DSC Pro](#nexus-dsc-pro)
     - [Update of the Nexus DSC Pro firmware](#update-of-the-nexus-dsc-pro-firmware)
     - [Network settings on the Nexus DSC Pro](#network-settings-on-the-nexus-dsc-pro)
@@ -52,7 +56,7 @@ Since I live in Belgium, this section is focused on European suppliers.  I purch
 | 03/08/2022 | [Raspberry Pi 4 model B - 4GB](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-v4/228-raspberry-pi-4b4gb-765756931182.html?search_query=Raspberry+Pi+4+model+B+-+4GB&results=203) | Raspberrystore.nl | € 74.95  | 10/08/2022 |
 | 03/08/2022 | [Raspberry Pi Pico](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/312-raspberry-pi-pico-0617588405587.html?search_query=Raspberry+Pi+4+Pico&results=203)                   | Raspberrystore.nl | € 3.99   | 10/08/2022 |
 | 03/08/2022 | [2 x 1x40 header](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/320-soldeerpennen-1x40-voor-de-raspberry-pi-pico.html?search_query=1x40+header&results=44)                 | Raspberrystore.nl | € 2.00   | 10/08/2022 |
-| 03/08/2022 | Verzendkosten Astroberrystore.nl                                                                                                                                                           | Raspberrystore.nl | € 12.74  | 10/08/2022 |
+| 03/08/2022 | Shipping costs Astroberrystore.nl                                                                                                                                                          | Raspberrystore.nl | € 12.74  | 10/08/2022 |
 | 03/08/2022 | [2.23 OLED Display Module for Raspberry Pi Pico](https://www.amazon.nl/gp/product/B093SYSX5S/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1)                                                 | Amazon (.nl)      | € 20.99  | 09/08/2022 |
 | 03/08/2022 | [Geekworm Raspberry Pi 4 Aluminum Case](https://www.amazon.nl/gp/product/B07ZVJDRF3/ref=ppx_od_dt_b_asin_title_s01?ie=UTF8&psc=1)                                                          | Amazon (.nl)      | € 14.89  | 08/08/2022 |
 | 03/08/2022 | [Sandisk Ultra 32 GB microSDHC](https://www.amazon.nl/gp/product/B08GY9NYRM/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                  | Amazon (.nl)      | € 8.01   | 08/08/2022 |
@@ -62,6 +66,24 @@ Since I live in Belgium, this section is focused on European suppliers.  I purch
 | 10/10/2022 | [TP-Link 300 Mbps Wifi USB-adapter (TL-WN823N)](https://www.amazon.nl/dp/B0088TKTY2/ref=pe_28126711_487805961_TE_item)                                                                     | Amazon (.nl)      | € 9.95   | 11/10/2022 |
 | 12/06/2023 | [D-Link DWR-932](https://www.amazon.com.be/dp/B00OVJDCQ0/ref=pe_43847721_689504491_TE_item)                                                                                                | Amazon (.com.be)  | € 54.83  | 14/06/2023 |
 |Total       |                                                                                                                                                                                            |                   | € 548.15 |            |
+## eFinder hardware configurations
+
+The eFinder can be added to your telescope system in a variety of ways, depending on your specific needs and preferences.
+The best option for you will depend on your specific needs and preferences. 
+
+### Nexus DSC Pro, using SkySafari
+
+A travel router is required when using SkySafari on a tablet with the Nexus DSC Pro.
+
+![Using a Nexus DSC Pro, ServoCAT and SkySafari](doc/NexusDSCPro.png)
+
+### Nexus DSC, using SkySafari if required
+
+When using a Nexus DSC, a travel router is not required when using SkySafari on a tablet.
+
+![Using a Nexus DSC, ServoCAT and SkySafari]()
+
+###  Nexus DSC Pro, without using SkySafari
 
 ## Nexus DSC Pro
 
