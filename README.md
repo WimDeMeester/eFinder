@@ -6,8 +6,10 @@
     - [Purchase of the hardware](#purchase-of-the-hardware)
   - [eFinder hardware configurations](#efinder-hardware-configurations)
     - [Nexus DSC Pro, using SkySafari](#nexus-dsc-pro-using-skysafari)
-    - [Nexus DSC, using SkySafari if required](#nexus-dsc-using-skysafari-if-required)
+      - [Specific settings on the Nexus DSC Pro](#specific-settings-on-the-nexus-dsc-pro)
     - [Nexus DSC Pro, without using SkySafari](#nexus-dsc-pro-without-using-skysafari)
+    - [Nexus DSC, using SkySafari](#nexus-dsc-using-skysafari)
+    - [Nexus DSC, without using SkySafari](#nexus-dsc-without-using-skysafari)
   - [Nexus DSC Pro](#nexus-dsc-pro)
     - [Update of the Nexus DSC Pro firmware](#update-of-the-nexus-dsc-pro-firmware)
     - [Network settings on the Nexus DSC Pro](#network-settings-on-the-nexus-dsc-pro)
@@ -73,17 +75,46 @@ The best option for you will depend on your specific needs and preferences.
 
 ### Nexus DSC Pro, using SkySafari
 
-A travel router is required when using SkySafari on a tablet with the Nexus DSC Pro.
+A travel router is required when using SkySafari on a tablet with the Nexus DSC Pro.  This is the needed hardware configuration:
 
-![Using a Nexus DSC Pro, ServoCAT and SkySafari](doc/NexusDSCPro.png)
+- The ServoCAT is connected directly to the eFinder using USB.  
+- The ServoCAT is also connected to the Nexus DSC Pro using a serial cable.
+- The ASI camera and the eFinder hand box are connected directly to the eFinder using USB. 
+- The Nexus DSC Pro is connected to the eFinder using USB.  As the Nexus DSC Pro is a host, a ttl to USB adapter is needed (from [amazon.co.uk](https://www.amazon.co.uk/gp/product/B08ZS4PHNL) or [amazon.com.be](https://www.amazon.com.be/-/nl/4-pins-PL2303-kabelmodule-4-polige-PL2303HX/dp/B07LH6NJSZ)). This cable should be connected directly to the GPIO pins of the Raspberry PI, as described in the following table:
 
-### Nexus DSC, using SkySafari if required
+| Raspberry Pi GPIO Pin |                        | 
+|-----------------------|------------------------|
+| 6                     | USB to TTL lead, black | 
+| 8                     | USB to TTL lead, green | 
+| 10                    | USB to TTL lead, white | 
+| not used              | USB to TTL lead, red   | 
+
+
+#### Specific settings on the Nexus DSC Pro
+
+- Change the USB from ServoCat to LX200,9600,N,1
+- Change Wifi to connect to Travel Router
+- ADD settings for the WIFI connection (LX200?)
+
+![Using a Nexus DSC Pro, ServoCAT and SkySafari](doc/NexusDSCProSkySafari.png)
+
+###  Nexus DSC Pro, without using SkySafari
+
+If you want to connect your tablet to the eFinder (for the GUI) then for the Nexus DSC Pro, you need a travel router. For the non Pro, the Nexus can act as a router.
+
+![Using a Nexus DSC Pro, ServoCAT and no SkySafari](doc/NexusDscPro.png)
+
+### Nexus DSC, using SkySafari
 
 When using a Nexus DSC, a travel router is not required when using SkySafari on a tablet.
 
-![Using a Nexus DSC, ServoCAT and SkySafari]()
+![]()
 
-###  Nexus DSC Pro, without using SkySafari
+### Nexus DSC, without using SkySafari
+
+When using a Nexus DSC, a travel router is not required when using SkySafari on a tablet.
+
+![Using a Nexus DSC, ServoCAT and SkySafari](doc/NexusDsc.png)
 
 ## Nexus DSC Pro
 
