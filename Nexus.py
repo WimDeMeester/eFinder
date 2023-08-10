@@ -13,12 +13,13 @@ import Coordinates
 class Nexus:
     """The Nexus utility class"""
 
-    def __init__(self, handpad: Display, coordinates: Coordinates) -> None:
+    def __init__(self, handpad: Display, coordinates: Coordinates, address) -> None:
         """Initializes the Nexus DSC
 
         Parameters:
         handpad (Display): The handpad that is connected to the eFinder
         coordinates (Coordinates): The coordinates utility class to be used in the eFinder
+        address: The IP address of the Nexus
         """
         self.handpad = handpad
         self.aligned = False
@@ -48,7 +49,7 @@ class Nexus:
             time.sleep(1)
             self.nexus_link = "USB"
         except:
-            self.HOST = "10.0.0.1"
+            self.HOST = address
             self.PORT = 4060
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
