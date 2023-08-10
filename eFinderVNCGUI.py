@@ -44,7 +44,7 @@ import Display
 import CameraInterface
 import ASICamera
 
-version = "16_3_VNC"
+version = "18_1_VNC"
 os.system("pkill -9 -f eFinder.py")  # comment out if this is the autoboot program
 
 home_path = str(Path.home())
@@ -78,7 +78,7 @@ b_g = "black"
 solved_radec = 0, 0
 usb = False
 pix_scale = 15
-
+scopeAlt = 0
 
 def setup_sidereal():
     global LST, lbl_LST, lbl_UTC, lbl_date
@@ -267,10 +267,8 @@ def solveImage():
     )
     elapsed_time = time.time() - start_time
     # print (result.stdout)
-    elapsed_time = "elapsed time " + str(elapsed_time)[0:4] + " sec"
-    tk.Label(window, text=elapsed_time, width=20, anchor="e", bg=b_g, fg=f_g).place(
-        x=315, y=936
-    )
+    elapsed_time = str(elapsed_time)[0:4] + " sec"
+    box_write("solved in " + elapsed_time, True)
     result = str(result.stdout)
     if "solved" not in result:
         box_write("Solve Failed", True)
@@ -413,10 +411,25 @@ def image_show():
     if mirror.get() == "1":
         img2 = ImageOps.mirror(img2)
     if auto_rotate.get() == "1":
-        img2 = img2.rotate(scopeAlt)
-    elif manual_rotate.get() == "1":
+        img2 = img2.rotate(scopeAlt*180/math.pi)
+    else:
         angle_deg = angle.get()
         img2 = img2.rotate(float(angle_deg))
+    if cameraFrame.get() == "1":
+        draw = ImageDraw.Draw(img2)
+        vfov = ((float(frame[1])/h) * height)/2
+        hfov = ((float(frame[0])/w) * width)/2
+        draw.rectangle(
+            [
+                width / 2 + w_offset - hfov,
+                height / 2 - h_offset - vfov,
+                width / 2 + w_offset + hfov,
+                height / 2 - h_offset + vfov,
+            ],
+            fill=None,
+            outline=255,
+            width=1,
+        )
     img3 = img2
     img2 = ImageTk.PhotoImage(img2)
     panel.configure(image=img2)
@@ -460,12 +473,8 @@ def annotate_image():
         if abell.get() == "1"
         else " "
     )
-    opt5 = (
-        " --tycho2cat=/usr/local/astrometry/annotate_data/tycho2.kd"
-        if tycho2.get() == "1"
-        else " "
-    )
-    opt6 = " " if ngc.get() == "1" else " --no-ngc"
+
+    opt5 = " " if ngc.get() == "1" else " --no-ngc"
     try:  # try because the solve may have failed to produce adjusted.jpg
         os.system(
             'python3 /usr/local/astrometry/lib/python/astrometry/plot/plotann.py \
@@ -475,7 +484,6 @@ def annotate_image():
             + opt3
             + opt4
             + opt5
-            + opt6
             + " \
             "
             + home_path
@@ -712,6 +720,8 @@ def solve():
     handpad.display("Solving image", "", "")
     solveImage()
     image_show()
+    handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
+ 
 
 
 def readTarget():
@@ -847,7 +857,7 @@ def reader():
         time.sleep(0.1)
 
 def get_param():
-    global eye_piece, param, expRange, gainRange
+    global eye_piece, param, expRange, gainRange, frame
     if os.path.exists(home_path + "/Solver/eFinder.config") == True:
         with open(home_path + "/Solver/eFinder.config") as h:
             for line in h:
@@ -860,6 +870,9 @@ def get_param():
                     expRange = line[1].split(",")
                 elif line[0].startswith("Gain_range"):
                     gainRange = line[1].split(",")
+                elif line[0].startswith("frame"):
+                    frame = line[1].split(",")
+                    
 
 def save_param():
     global param
@@ -884,12 +897,25 @@ def do_button(event):
         handpad.display('Performing','  align','')
         align()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'Report:'+p)
-    elif button == '21': # down button
+    elif button == '18': # down button
         handpad.display('Performing','   GoTo++','')
         goto()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
-        
+    elif button == '17' or button== '19':
+        handpad.display('Up: Align','OK: Solve','Dn: GoTo++')
 
+def setTarget():
+    print(gotoRa.get(),gotoDec.get())
+    nexus.write(":Sr" + gotoRa.get() + "#")
+    time.sleep(0.05)
+    gDec = gotoDec.get().split(':')
+    print(gDec[0][0])
+    if gDec[0][0] != "+" and gDec[0][0] != "-":
+        gDec[0] = '+'+gDec[0] 
+    gDec = gDec[0]+"*"+gDec[1]+":"+gDec[2]
+    nexus.write(":Sd" + gDec + "#")
+    box_write("GoTo target set",True)
+    
 
 # main code starts here
 handpad = Display.Handpad(version)
@@ -912,13 +938,15 @@ elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
     import QHYCamera
     camera = QHYCamera.QHYCamera(handpad)
 
-handpad.display('eFinder via VNC','OK: Solve/GoTo','Up:Align',)
+handpad.display('Up: Align','OK: Solve','Dn: GoTo++')
 # main program loop, using tkinter GUI
 window = tk.Tk()
 window.title("ScopeDog eFinder v" + version)
 window.geometry("1300x1000+100+10")
 window.configure(bg="black")
 window.bind("<<OLED_Button>>", do_button)
+
+window.option_add( "*font", "Helvetica 12 bold" )
 setup_sidereal()
 
 sid = threading.Thread(target=sidereal)
@@ -931,8 +959,7 @@ scan = threading.Thread(target=reader)
 scan.daemon = True
 scan.start()
 
-
-tk.Label(window, text="Date", fg=f_g, bg=b_g).place(x=15, y=0)
+tk.Label(window, text="Date",fg=f_g, bg=b_g).place(x=15, y=0)
 tk.Label(window, text="UTC", bg=b_g, fg=f_g).place(x=15, y=22)
 tk.Label(window, text="LST", bg=b_g, fg=f_g).place(x=15, y=44)
 tk.Label(window, text="Loc:", bg=b_g, fg=f_g).place(x=15, y=66)
@@ -1035,12 +1062,13 @@ tk.Button(
     height=2,
     width=10,
     command=align,
-).pack(padx=1, pady=40)
+).pack(padx=1, pady=30)
 tk.Button(
     but_frame,
     text="Capture",
     activebackground="red",
     highlightbackground="red",
+    highlightthickness=3,
     bd=0,
     bg=b_g,
     fg=f_g,
@@ -1053,6 +1081,7 @@ tk.Button(
     text="Solve",
     activebackground="red",
     highlightbackground="red",
+    highlightthickness=3,
     bd=0,
     height=2,
     width=10,
@@ -1062,9 +1091,10 @@ tk.Button(
 ).pack(padx=1, pady=5)
 tk.Button(
     but_frame,
-    text="GoTo: via Align",
+    text="GoTo++",
     activebackground="red",
     highlightbackground="red",
+    highlightthickness=3,
     bd=0,
     height=2,
     width=10,
@@ -1087,6 +1117,7 @@ tk.Button(
 
 off_frame = Frame(window, bg="black")
 off_frame.place(x=10, y=420)
+#tk.Label(off_frame, text="Offset:", bg=b_g, fg=f_g).place(x=10, y=400)
 tk.Button(
     off_frame,
     text="Measure",
@@ -1181,8 +1212,45 @@ tk.Button(
     command=readTarget,
 ).pack(padx=1, pady=1)
 
+tk.Label(window, text="RA", bg=b_g, fg=f_g).place(x=575, y=952)
+tk.Label(window, text="Dec", bg=b_g, fg=f_g).place(x=575, y=974)
+goto_frame = Frame(window, bg="black")
+goto_frame.place(x=605,y=918)
+tk.Button(
+    goto_frame,
+    text="Set GoTo",
+    bg=b_g,
+    fg=f_g,
+    activebackground="red",
+    highlightbackground="red",
+    bd=0,
+    command=setTarget,
+).pack(padx=1, pady=1)
+gotoRa = StringVar()
+gotoRa.set("00:44:01")
+tk.Entry(
+    goto_frame,
+    textvariable=gotoRa,
+    bg="red",
+    fg=b_g,
+    highlightbackground="red",
+    bd=0,
+    width=10,
+).pack(padx=10, pady=1)
+gotoDec = StringVar()
+gotoDec.set("+41:23:49")
+tk.Entry(
+    goto_frame,
+    textvariable=gotoDec,
+    bg="red",
+    fg=b_g,
+    highlightbackground="red",
+    bd=0,
+    width=10,
+).pack(padx=10, pady=1)
+
 dis_frame = Frame(window, bg="black")
-dis_frame.place(x=800, y=765)
+dis_frame.place(x=790, y=765)
 tk.Button(
     dis_frame,
     text="Display",
@@ -1200,7 +1268,7 @@ grat.set("0")
 tk.Checkbutton(
     dis_frame,
     text="graticule",
-    width=10,
+    width=12,
     anchor="w",
     highlightbackground="black",
     activebackground="red",
@@ -1212,14 +1280,14 @@ lock = StringVar()
 lock.set("0")
 tk.Checkbutton(
     dis_frame,
-    text="Scope centre",
+    text="Scope centred",
     bg=b_g,
     fg=f_g,
     activebackground="red",
     anchor="w",
     highlightbackground="black",
     bd=0,
-    width=10,
+    width=12,
     variable=lock,
 ).pack(padx=1, pady=1)
 zoom = StringVar()
@@ -1233,7 +1301,7 @@ tk.Checkbutton(
     anchor="w",
     highlightbackground="black",
     bd=0,
-    width=10,
+    width=12,
     variable=zoom,
 ).pack(padx=1, pady=1)
 flip = StringVar()
@@ -1247,7 +1315,7 @@ tk.Checkbutton(
     anchor="w",
     highlightbackground="black",
     bd=0,
-    width=10,
+    width=12,
     variable=flip,
 ).pack(padx=1, pady=1)
 mirror = StringVar()
@@ -1261,7 +1329,7 @@ tk.Checkbutton(
     anchor="w",
     highlightbackground="black",
     bd=0,
-    width=10,
+    width=12,
     variable=mirror,
 ).pack(padx=1, pady=1)
 auto_rotate = StringVar()
@@ -1275,14 +1343,13 @@ tk.Checkbutton(
     anchor="w",
     highlightbackground="black",
     bd=0,
-    width=10,
+    width=12,
     variable=auto_rotate,
 ).pack(padx=1, pady=1)
-manual_rotate = StringVar()
-manual_rotate.set("1")
-tk.Checkbutton(
+
+tk.Label(
     dis_frame,
-    text="rotate angle",
+    text="or rotate",
     bg=b_g,
     fg=f_g,
     activebackground="red",
@@ -1290,7 +1357,6 @@ tk.Checkbutton(
     highlightbackground="black",
     bd=0,
     width=10,
-    variable=manual_rotate,
 ).pack(padx=1, pady=1)
 angle = StringVar()
 angle.set("0")
@@ -1316,7 +1382,7 @@ tk.Button(
     anchor="w",
     highlightbackground="red",
     bd=0,
-    width=6,
+    width=8,
     command=annotate_image,
 ).pack(padx=1, pady=1)
 bright = StringVar()
@@ -1389,20 +1455,7 @@ tk.Checkbutton(
     width=8,
     variable=abell,
 ).pack(padx=1, pady=1)
-tycho2 = StringVar()
-tycho2.set("0")
-tk.Checkbutton(
-    ann_frame,
-    text="Tycho2",
-    bg=b_g,
-    fg=f_g,
-    activebackground="red",
-    anchor="w",
-    highlightbackground="black",
-    bd=0,
-    width=8,
-    variable=tycho2,
-).pack(padx=1, pady=1)
+
 
 tk.Label(window, text="RA", bg=b_g, fg=f_g).place(x=200, y=804)
 tk.Label(window, text="Dec", bg=b_g, fg=f_g).place(x=200, y=826)
@@ -1441,6 +1494,21 @@ for i in range(len(eye_piece)):
         value=eye_piece[i][1] * eye_piece[i][2],
         variable=EPlength,
     ).pack(padx=1, pady=0)
+cameraFrame = StringVar()
+cameraFrame.set("0")
+tk.Checkbutton(
+        EP_frame,
+        text="camera",
+        bg=b_g,
+        fg=f_g,
+        activebackground="red",
+        anchor="w",
+        highlightbackground="black",
+        bd=0,
+        width=20,
+        variable=cameraFrame,
+    ).pack(padx=1, pady=0)    
 get_offset()
+use_loaded_offset()
 window.protocol("WM_DELETE_WINDOW", on_closing)
 window.mainloop()
