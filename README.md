@@ -4,6 +4,12 @@
   - [Source code](#source-code)
   - [Needed parts](#needed-parts)
     - [Purchase of the hardware](#purchase-of-the-hardware)
+  - [eFinder hardware configurations](#efinder-hardware-configurations)
+    - [Nexus DSC Pro, using SkySafari](#nexus-dsc-pro-using-skysafari)
+      - [Specific settings on the Nexus DSC Pro](#specific-settings-on-the-nexus-dsc-pro)
+    - [Nexus DSC Pro, without using SkySafari](#nexus-dsc-pro-without-using-skysafari)
+    - [Nexus DSC, using SkySafari](#nexus-dsc-using-skysafari)
+    - [Nexus DSC, without using SkySafari](#nexus-dsc-without-using-skysafari)
   - [Nexus DSC Pro](#nexus-dsc-pro)
     - [Update of the Nexus DSC Pro firmware](#update-of-the-nexus-dsc-pro-firmware)
     - [Network settings on the Nexus DSC Pro](#network-settings-on-the-nexus-dsc-pro)
@@ -31,30 +37,84 @@
 
 ## Source code
 
-- The source code can be found at [google drive](https://drive.google.com/drive/folders/1GnNv5xhHqUr66mJKaSsVWqEgyuoLcbI8).
+- The source code can be downloaded from [GitHub](https://github.com/WimDeMeester/eFinder/releases/latest).
 
 ## Needed parts
 
 ### Purchase of the hardware
 
-As I live in Belgium, this section is very Europe-centric.  I ordered the ASI camera at Teleskop Service (Germany) and the rest in the Netherlands.
+In the following list, you can see which hardware is needed to construct a working eFinder. 
 
-| Ordered    | Product                                                                                                                                                                                    | Company           | Amount   | Arrival   |
+The Nexus DSC Pro cannot connect directly over WiFi to more than one machine (e.g. the eFinder and a tablet running SkySafari). To solve this, you can use an external router. The D-Link router is not needed if you use the Nexus DSC, as the problem does not occur on the Nexus DSC.
+
+The Raspberry Pi has a poor WiFi connection when it is in a case. To improve the connection, you can add an external WiFi adapter. The TP-Link adapter is a good option. Instructions on how to set up the adapter are provided later in this document.
+
+Since I live in Belgium, this section is focused on European suppliers.  I purchased the ASI camera at Teleskop Service in Germany, and the rest of the components from suppliers in the Netherlands (Raspberrystore) or Amazon.
+
+| Ordered    | Product                                                                                                                                                                                    | Company           | Amount   | Arrival    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | -------- | ---------- |
-| 03/08/2022 | Software                                                                                                                                                                                   | Keith Venables    | 26.98 €  | 03/08/2022 |
-| 03/08/2022 | [ASI120MM-S](https://www.teleskop-express.de/shop/product_info.php/info/p7109)                                                                                                             | Teleskop Service  | 248.51 € | 11/08/2022           |
-| 03/08/2022 | [Raspberry Pi 4 model B - 4GB](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-v4/228-raspberry-pi-4b4gb-765756931182.html?search_query=Raspberry+Pi+4+model+B+-+4GB&results=203) | Raspberrystore.nl | 74.95 €  | 10/08/2022           |
-| 03/08/2022 | [Raspberry Pi Pico](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/312-raspberry-pi-pico-0617588405587.html?search_query=Raspberry+Pi+4+Pico&results=203)                   | Raspberrystore.nl | 3.99 €   | 10/08/2022           |
-| 03/08/2022 | [2 x 1x40 header](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/320-soldeerpennen-1x40-voor-de-raspberry-pi-pico.html?search_query=1x40+header&results=44)                 | Raspberrystore.nl | 2.00 €   | 10/08/2022           |
-| 03/08/2022 | Verzendkosten Astroberrystore.nl                                                                                                                                                           | Raspberrystore.nl | 12.74 €  | 10/08/2022           |
-| 03/08/2022 | [2.23 OLED Display Module for Raspberry Pi Pico](https://www.amazon.nl/gp/product/B093SYSX5S/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1)                                                 | Amazon (.nl)      | 20.99 €  | 09/08/2022          |
-| 03/08/2022 | [Geekworm Raspberry Pi 4 Aluminum Case](https://www.amazon.nl/gp/product/B07ZVJDRF3/ref=ppx_od_dt_b_asin_title_s01?ie=UTF8&psc=1)                                                          | Amazon (.nl)      | 14.89 €  | 08/08/2022           |
-| 03/08/2022 | [Sandisk Ultra 32 GB microSDHC](https://www.amazon.nl/gp/product/B08GY9NYRM/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                  | Amazon (.nl)      | 8.01 €   | 08/08/2022           |
-| 03/08/2022 | [100 x 60 x 25 mm DIY box](https://www.amazon.nl/gp/product/B07V2Q32H8/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                       | Amazon (.nl)      | 10.62 €  | 08/08/2022           |
-| 03/08/2022 | [Lon0167  Momentary Circuit Control Tactile Tact Push Button Switch](https://www.amazon.nl/gp/product/B0842JYXC8/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1)                         | Amazon (.nl)      | 11.31 €  | 16/08/2022           |
-| 03/08/2022 | [50 mm F1.8 CCTV-lens for C-mount](https://www.amazon.nl/gp/product/B08BF7DRXR/ref=ppx_yo_dt_b_asin_title_o02_s00?ie=UTF8&psc=1)                                                           | Amazon (.nl)      | 48.38 €  | 16/08/2022           |
-| 10/10/2022 | [TP-Link 300 Mbps Wifi USB-adapter (TL-WN823N)](https://www.amazon.nl/dp/B0088TKTY2/ref=pe_28126711_487805961_TE_item)                                                                     | Amazon (.nl)      | 9.95 €  | 11/10/2022           |
-|Total      |                                                                                                                                                                                            |                   | 493.32 € |            |
+| 03/08/2022 | Software                                                                                                                                                                                   | Keith Venables    | € 26.98  | 03/08/2022 |
+| 03/08/2022 | [ASI120MM-S](https://www.teleskop-express.de/shop/product_info.php/info/p7109)                                                                                                             | Teleskop Service  | € 248.51 | 11/08/2022 |
+| 03/08/2022 | [Raspberry Pi 4 model B - 4GB](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-v4/228-raspberry-pi-4b4gb-765756931182.html?search_query=Raspberry+Pi+4+model+B+-+4GB&results=203) | Raspberrystore.nl | € 74.95  | 10/08/2022 |
+| 03/08/2022 | [Raspberry Pi Pico](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/312-raspberry-pi-pico-0617588405587.html?search_query=Raspberry+Pi+4+Pico&results=203)                   | Raspberrystore.nl | € 3.99   | 10/08/2022 |
+| 03/08/2022 | [2 x 1x40 header](https://www.raspberrystore.nl/PrestaShop/nl/raspberry-pi-pico/320-soldeerpennen-1x40-voor-de-raspberry-pi-pico.html?search_query=1x40+header&results=44)                 | Raspberrystore.nl | € 2.00   | 10/08/2022 |
+| 03/08/2022 | Shipping costs Astroberrystore.nl                                                                                                                                                          | Raspberrystore.nl | € 12.74  | 10/08/2022 |
+| 03/08/2022 | [2.23 OLED Display Module for Raspberry Pi Pico](https://www.amazon.nl/gp/product/B093SYSX5S/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1)                                                 | Amazon (.nl)      | € 20.99  | 09/08/2022 |
+| 03/08/2022 | [Geekworm Raspberry Pi 4 Aluminum Case](https://www.amazon.nl/gp/product/B07ZVJDRF3/ref=ppx_od_dt_b_asin_title_s01?ie=UTF8&psc=1)                                                          | Amazon (.nl)      | € 14.89  | 08/08/2022 |
+| 03/08/2022 | [Sandisk Ultra 32 GB microSDHC](https://www.amazon.nl/gp/product/B08GY9NYRM/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                  | Amazon (.nl)      | € 8.01   | 08/08/2022 |
+| 03/08/2022 | [100 x 60 x 25 mm DIY box](https://www.amazon.nl/gp/product/B07V2Q32H8/ref=ppx_od_dt_b_asin_title_s02?ie=UTF8&psc=1)                                                                       | Amazon (.nl)      | € 10.62  | 08/08/2022 |
+| 03/08/2022 | [Lon0167  Momentary Circuit Control Tactile Tact Push Button Switch](https://www.amazon.nl/gp/product/B0842JYXC8/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1)                         | Amazon (.nl)      | € 11.31  | 16/08/2022 |
+| 03/08/2022 | [50 mm F1.8 CCTV-lens for C-mount](https://www.amazon.nl/gp/product/B08BF7DRXR/ref=ppx_yo_dt_b_asin_title_o02_s00?ie=UTF8&psc=1)                                                           | Amazon (.nl)      | € 48.38  | 16/08/2022 |
+| 10/10/2022 | [TP-Link 300 Mbps Wifi USB-adapter (TL-WN823N)](https://www.amazon.nl/dp/B0088TKTY2/ref=pe_28126711_487805961_TE_item)                                                                     | Amazon (.nl)      | € 9.95   | 11/10/2022 |
+| 12/06/2023 | [D-Link DWR-932](https://www.amazon.com.be/dp/B00OVJDCQ0/ref=pe_43847721_689504491_TE_item)                                                                                                | Amazon (.com.be)  | € 54.83  | 14/06/2023 |
+|Total       |                                                                                                                                                                                            |                   | € 548.15 |            |
+## eFinder hardware configurations
+
+The eFinder can be added to your telescope system in a variety of ways, depending on your specific needs and preferences.
+The best option for you will depend on your specific needs and preferences. 
+
+### Nexus DSC Pro, using SkySafari
+
+A travel router is required when using SkySafari on a tablet with the Nexus DSC Pro.  This is the needed hardware configuration:
+
+- The ServoCAT is connected directly to the eFinder using USB.  
+- The ServoCAT is also connected to the Nexus DSC Pro using a serial cable.
+- The ASI camera and the eFinder hand box are connected directly to the eFinder using USB. 
+- The Nexus DSC Pro is connected to the eFinder using USB.  As the Nexus DSC Pro is a host, a ttl to USB adapter is needed (from [amazon.co.uk](https://www.amazon.co.uk/gp/product/B08ZS4PHNL) or [amazon.com.be](https://www.amazon.com.be/-/nl/4-pins-PL2303-kabelmodule-4-polige-PL2303HX/dp/B07LH6NJSZ)). This cable should be connected directly to the GPIO pins of the Raspberry PI, as described in the following table:
+
+| Raspberry Pi GPIO Pin |                        | 
+|-----------------------|------------------------|
+| 6                     | USB to TTL lead, black | 
+| 8                     | USB to TTL lead, green | 
+| 10                    | USB to TTL lead, white | 
+| not used              | USB to TTL lead, red   | 
+
+
+#### Specific settings on the Nexus DSC Pro
+
+- Change the USB from ServoCat to LX200,9600,N,1
+- Change Wifi to connect to Travel Router
+- ADD settings for the WIFI connection (LX200?)
+
+![Using a Nexus DSC Pro, ServoCAT and SkySafari](doc/NexusDSCProSkySafari.png)
+
+###  Nexus DSC Pro, without using SkySafari
+
+If you want to connect your tablet to the eFinder (for the GUI) then for the Nexus DSC Pro, you need a travel router. For the non Pro, the Nexus can act as a router.
+
+![Using a Nexus DSC Pro, ServoCAT and no SkySafari](doc/NexusDscPro.png)
+
+### Nexus DSC, using SkySafari
+
+When using a Nexus DSC, a travel router is not required when using SkySafari on a tablet.
+
+![]()
+
+### Nexus DSC, without using SkySafari
+
+When using a Nexus DSC, a travel router is not required when using SkySafari on a tablet.
+
+![Using a Nexus DSC, ServoCAT and SkySafari](doc/NexusDsc.png)
 
 ## Nexus DSC Pro
 
