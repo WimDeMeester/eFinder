@@ -7,6 +7,7 @@
   - [eFinder hardware configurations](#efinder-hardware-configurations)
     - [Nexus DSC Pro, using SkySafari](#nexus-dsc-pro-using-skysafari)
       - [Specific settings on the Nexus DSC Pro](#specific-settings-on-the-nexus-dsc-pro)
+      - [Create a RAM disk on the Raspberry Pi](#create-a-ram-disk-on-the-raspberry-pi)
     - [Nexus DSC Pro, without using SkySafari](#nexus-dsc-pro-without-using-skysafari)
     - [Nexus DSC, using SkySafari](#nexus-dsc-using-skysafari)
     - [Nexus DSC, without using SkySafari](#nexus-dsc-without-using-skysafari)
@@ -94,7 +95,26 @@ A travel router is required when using SkySafari on a tablet with the Nexus DSC 
 
 - Change the USB from ServoCat to LX200,9600,N,1
 - Change Wifi to connect to Travel Router
+  - Infrastructure, set SSID, Password, DHCP Disabled
+  - Channel: 6
+  - IP Address: 192.168.0.19
+  - Mask: 255.255.255.0
+  - Gateway: 192.168.0.1
+  - Protocol: LX200
+  - TCP port: 4060
+  - Use EPOCH: JNow
 - ADD settings for the WIFI connection (LX200?)
+
+#### Create a RAM disk on the Raspberry Pi
+
+Edit /fstab to add the line:
+
+`tmpfs /var/tmp tmpfs nodev,nosuid,size=10M 0 0`
+
+Save & exit
+
+Execute in terminal
+`sudo mount -a`
 
 ![Using a Nexus DSC Pro, ServoCAT and SkySafari](doc/NexusDSCProSkySafari.png)
 
