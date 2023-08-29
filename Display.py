@@ -38,7 +38,7 @@ class Handpad:
             exit()
 
         self.display("ScopeDog", "eFinder v" + self.version, "")
-        print("  USB:", self.USB_module)
+        print("USB Handpad connected:", self.USB_module)
 
     def display(self, line0: str, line1: str, line2: str) -> None:
         """Display the three lines on the display

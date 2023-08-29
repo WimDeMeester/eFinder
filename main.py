@@ -95,8 +95,9 @@ def send_pin(p):
             return
     time.sleep(0.3)
     if p.value()==True:
-        print(str(p)[4:6])
-    elif str(p)[4:6]=='20':
+        print(str(p)[8:10])
+    elif str(p)[8:10
+                ]=='20':
         print("21")
     time.sleep(0.1)
 

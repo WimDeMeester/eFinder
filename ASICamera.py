@@ -86,11 +86,6 @@ class ASICamera(CameraInterface):
             print("using Polaris")
         else:
             camera.capture(filename=self.home_path + "/Solver/images/capture.jpg")
-            copyfile(
-                self.home_path + "/Solver/images/capture.jpg",
-                self.home_path + "/Solver/Stills/" + timestr + "_" + radec + ".jpg",
-            )
-
         return
 
     def get_cam_type(self) -> str:

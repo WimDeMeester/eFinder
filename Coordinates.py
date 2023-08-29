@@ -64,7 +64,7 @@ class Coordinates:
         return dms
 
     def dd2aligndms(self, dd: float) -> str:
-        """Convert decimal degrees to a string (dd*mm:ss)
+        """Convert decimal degrees to a string (sDD*MM:SS)
 
         Parameters:
         dd (float): The degrees to convert
