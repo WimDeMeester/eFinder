@@ -7,15 +7,11 @@ class ServoCat:
 
     def __init__(self) -> None:
         """Initializes the ServoCat link
-
-        Parameters:
+        Parameters: None
         """
-
-
         try:
             self.ser = serial.Serial("/dev/ttyUSB0", baudrate=9600)
-            print('ServoCat found on USB')
-            
+            print('ServoCat USB opened')   
         except:
             print("no USB to ServoCat found")
             pass

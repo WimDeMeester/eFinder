@@ -1,0 +1,88 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica-Bold;\f1\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid2}
+{\list\listtemplateid3\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid201\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid3}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}}
+\paperw11900\paperh16840\margl1440\margr1440\vieww15320\viewh20240\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b\fs24 \cf0 Ver 21
+\f1\b0 \
+\
+All inclusive versions of the GUI & Handpad eFinder programs\
+Brings together all options, except for the encoder-less push-to version (ver 19)\
+\
+Some of the features below have been seen before, but included here for completeness or if upgrading from an early version.\
+\
+efinder.config now contains extra lines to specify\'85\'85\
+\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls1\ilvl0\cf0 {\listtext	\uc0\u8226 	}Drive type: enter servocat or scopedog\
+{\listtext	\uc0\u8226 	}Use of ramdisk: enter True or False. location of image and solve working files. If False then the working directory is the previous ~/Solver/images/. I have found that moving index files to ram doesn\'92t speed up solves, as the Pi OS keeps them there anyway after the first solve..\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+Ver 21 uses some changed support files, so if upgrading or trying ver21, best \ul copy\ulnone  all your existing files somewhere safe! Load all the files in the Google share ver 21 folder into your /Solver folder allowing it to overwrite when asked. Thus it will retain your subfolders and files like de421.bsp.\
+\
+Your Nexus DSC (Pro) will need to have the latest firmware  1.4.14 for the basic DSC and 1.1.20 for the Pro. Copies are available in the Nexus folder in the Google share.\
+\
+\
+
+\f0\b VNGUI
+\f1\b0 \
+\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls2\ilvl0\cf0 {\listtext	\uc0\u8226 	}Has layout and font changes to improve legibility.\
+{\listtext	\uc0\u8226 	}Has 3 new buttons\
+{\listtext	\uc0\u8226 	}   Target: Reads current target RA&Dec AltAz held by the Nexus (either its own or one sent by SkySafari)\
+{\listtext	\uc0\u8226 	}   Set GoTo: Ability to upload a goto target to the Nexus DSC. The fields are filled with arbitrary values to demonstrate the format required.\
+{\listtext	\uc0\u8226 	}   Save Image: saves last captured image to the folder /Solver/Stills as filename ddmmyy_hhmmss.jpg (datetime is UTC)\
+{\listtext	\uc0\u8226 	}If a Target has been read from the Nexus DSC, then a delta x,y with respect to the target is calculated and displayed when solving an image.\
+{\listtext	\uc0\u8226 	}Remember delta x,y is not the same as delta Az, Alt. Delta y does equal delta Alt. Delta x equals delta Az * cos (Alt). Thus dx,dy is what would be seen in the eyepiece. \
+{\listtext	\uc0\u8226 	}Nexus column is now a live display updated every 0.5 seconds\
+{\listtext	\uc0\u8226 	}GoTo++ is now only the \'93local sync + repeat last goto\'94 version. Experience has shown this method to be excellent.\
+{\listtext	\uc0\u8226 	}The GoTo++ function waits until the scope has finished moving before continuing, and displaying \'91goto finished\'92\
+{\listtext	\uc0\u8226 	}STOP button replaces old \'91Move\'92 button, which will stop any goto in progress.\
+{\listtext	\uc0\u8226 	}Simplified display autorotate checkbox and entry of manual image rotation.\
+{\listtext	\uc0\u8226 	}Option to display a camera fov box, as well as eyepieces. Box size set in efinder.config. Note option to display is independent of the eyepiece fields of view \'91FOV indicator\'92\
+{\listtext	\uc0\u8226 	}On starting the saved offset is now loaded.\
+{\listtext	\uc0\u8226 	}The display of solved time is now in the scrolling report window at bottom right. This window also now includes more reports.\
+{\listtext	\uc0\u8226 	}While running the GUI, the handpad display shows results, and can be used to trigger solve/align/goto\
+{\listtext	\uc0\u8226 	}It will run without a handpad connected.\
+{\listtext	\uc0\u8226 	}Tycho2 catalogue option removed from Annotate list. Far too many labels!\
+\ls2\ilvl0{\listtext	\uc0\u8226 	}QHY cameras support is included, but not yet tested with an actual camera! Let me know if a problem.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+\
+
+\f0\b Handpad version
+\f1\b0 \
+\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls3\ilvl0\cf0 {\listtext	\uc0\u8226 	}efinder ver21 menu.pdf on the google share shows the latest handpad screen menu structure\
+{\listtext	\uc0\u8226 	}Use main_eF1_2.py. Once this is loaded (as main.py) the usual Thonny stop won\'92t work. To stop the code (ie for an update) plug in handset with \'91OK\'92 button pressed.\
+\ls3\ilvl0{\listtext	\uc0\u8226 	}display brightness adjusted from handpad.\
+{\listtext	\uc0\u8226 	}Home display, is a live readout of Nexus derived position.\
+{\listtext	\uc0\u8226 	}Home display shows a \'92T\'92 or \'92N\'92 in top right to indicate Nexus align status (
+\f0\b N
+\f1\b0 ot or 
+\f0\b T
+\f1\b0 racking)\
+{\listtext	\uc0\u8226 	}The GoTo++ function waits until the scope has finished moving before continuing, and displaying \'91goto finished\'92\
+\ls3\ilvl0{\listtext	\uc0\u8226 	}If you use \'91Perspex Ruby\'92 3mm thick acrylic for the handset OLED window the display colour is > 630nm and hence very good for dark adaptation. The contrast is very high and a brightness level of \'911\'92 is probably useable by most.\
+{\listtext	\uc0\u8226 	}The handpad powers up at a bright setting visible in daylight. (Value stored in bright.txt on Pico). It will stay at this level until the user scrolls down twice (the status display), then it will adjust to the previously set dim level.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 Many thanks to Wim and Mike who have shown the way in restructuring the code into Classes and other refinements. Thanks to others who have given other valuable feedback.\
+\
+Special thanks to Serge at AstroDevices for strong support and producing Nexus DSC firmware enhancements as needed. (He is building his own eFinder too)\
+\
+Thanks to Bentley who has set up a forum for us to discuss and share eFinder experiences and issues. It can be found here {\field{\*\fldinst{HYPERLINK "https://groups.io/g/eFinder/messages"}}{\fldrslt https://groups.io/g/eFinder/messages}}\
+\
+Keith Venables\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 19 August 2023}

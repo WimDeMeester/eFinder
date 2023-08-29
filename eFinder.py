@@ -29,11 +29,10 @@ import fitsio
 import Nexus
 import Coordinates
 import Display
-import ASICamera
-import CameraInterface
+from shutil import copyfile
 
 home_path = str(Path.home())
-version = "18_3"
+version = "21_2"
 os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
@@ -45,13 +44,15 @@ star_name = "no star"
 solve = False
 sync_count = 0
 pix_scale = 15
+sDog = True
+
 
 def xy2rd(x, y):  # returns the RA & Dec equivalent to a camera pixel x,y
     result = subprocess.run(
         [
             "wcs-xy2rd",
             "-w",
-            home_path + "/Solver/images/capture.wcs",
+            destPath + "capture.wcs",
             "-x",
             str(x),
             "-y",
@@ -85,9 +86,31 @@ def imgDisplay():  # displays the captured image on the Pi desktop.
     for proc in psutil.process_iter():
         if proc.name() == "display":
             proc.kill()  # delete any previous image display
-    im = Image.open(home_path + "/Solver/images/capture.jpg")
-    im.show()
+    im = Image.open(destPath + "capture.jpg")
+    #im.show()
 
+def capture():
+    global param
+    if param["Test mode"] == "1":
+        if offset_flag == False:
+            m13 = True
+            polaris_cap = False
+        else:
+            m13 = False
+            polaris_cap = True
+    else:
+        m13 = False
+        polaris_cap = False
+    radec = nexus.get_short()
+    camera.capture(
+        int(float(param["Exposure"]) * 1000000),
+        int(float(param["Gain"])),
+        radec,
+        m13,
+        polaris_cap,
+        destPath,
+    )
+    
 def solveImage():
     global offset_flag, solve, solvedPos, elapsed_time, star_name, star_name_offset, solved_radec, solved_altaz
     scale_low = str(pix_scale * 0.9)
@@ -128,8 +151,9 @@ def solveImage():
         "none",  # Don't generate the point list
     ]    
     #    "--temp-axy",  # We can't specify not to create the axy list, but we can write it to /tmp
+    
     cmd = ["solve-field"]
-    captureFile = home_path + "/Solver/images/capture.jpg"
+    captureFile = destPath + "capture.jpg"
     options = (
         limitOptions + optimizedOptions + scaleOptions + fileOptions + [captureFile]
     )
@@ -148,7 +172,7 @@ def solveImage():
         solve = False
         return
     if (offset_flag == True) and ("The star" in result):
-        table, h = fitsio.read(home_path + "/Solver/images/capture.axy", header=True)
+        table, h = fitsio.read(destPath + "capture.axy", header=True)
         star_name_offset = table[0][0], table[0][1]
         lines = result.split("\n")
         for line in lines:
@@ -311,27 +335,6 @@ def update_summary():
     arr[1, 0][1] = "Test mode:" + str(param["Test mode"])
     save_param()
 
-def capture():
-    global param
-    if param["Test mode"] == "1":
-        if offset_flag == False:
-            m13 = True
-            polaris_cap = False
-        else:
-            m13 = False
-            polaris_cap = True
-    else:
-        m13 = False
-        polaris_cap = False
-    radec = nexus.get_short()
-    camera.capture(
-        int(float(param["Exposure"]) * 1000000),
-        int(float(param["Gain"])),
-        radec,
-        m13,
-        polaris_cap,
-    )
-
 def go_solve():
     global x, y, solve, arr
     new_arr = nexus.read_altAz(arr)
@@ -352,25 +355,72 @@ def go_solve():
 
 def goto():
     handpad.display("Attempting", "GoTo++", "")
-    goto_ra = nexus.get(":Gr#")
-    if (
-        goto_ra[0:2] == "00" and goto_ra[3:5] == "00"
-    ):  # not a valid goto target set yet.
-        print("no GoTo target")
-        handpad.display("no GoTo target","set yet","")
-        return
-    goto_dec = nexus.get(":Gd#")
-    print("Target goto RA & Dec", goto_ra, goto_dec)
-    align()
-    if solve == False:
-        handpad.display("problem", "solving", "")
-        return
-    nexus.write(":Sr" + goto_ra + "#")
-    nexus.write(":Sd" + goto_dec + "#")
-    reply = nexus.get(":MS#")
+    if sDog == True:
+        goto_ra = nexus.get(":Gr#")
+        if (
+            goto_ra[0:2] == "00" and goto_ra[3:5] == "00"
+        ):  # not a valid goto target set yet.
+            print("no GoTo target")
+            handpad.display("no GoTo target","set yet","")
+            return
+        goto_dec = nexus.get(":Gd#")
+        print("Target goto RA & Dec", goto_ra, goto_dec)
+        align()
+        if solve == False:
+            handpad.display("problem", "solving", "")
+            return
+        nexus.write(":Sr" + goto_ra + "#")
+        nexus.write(":Sd" + goto_dec + "#")
+        reply = nexus.get(":MS#")
+    else:
+        goto_ra = nexus.get(":Gr#").split(":")
+        if (
+            goto_ra[0] == "00" and goto_ra[1] == "00"
+        ):  # not a valid goto target set yet.
+            print("no GoTo target")
+            handpad.display("no GoTo target","set yet","")
+            return
+        goto_dec = re.split(r"[:*]",nexus.get(":Gd#"))
+        goto_radec = (
+                float(goto_ra[0]) + float(goto_ra[1]) / 60 + float(goto_ra[2]) / 3600
+            ), math.copysign(
+                abs(abs(float(goto_dec[0])) + float(goto_dec[1]) / 60 + float(goto_dec[2]) / 3600),
+                float(goto_dec[0]),
+            )
+        gotoStr = '%s%06.3f %+06.3f' %("g",goto_radec[0],goto_radec[1])
+        print("Target goto RA & Dec", gotoStr)
+        align()
+        if solve == False:
+            handpad.display("problem", "solving", "")
+            return
+        servocat.send(gotoStr)
     handpad.display("Performing", " GoTo++", "")
-    time.sleep(5)  # replace with a check on goto progress
+    time.sleep(1)
+    gotoStopped()
+    handpad.display("Finished", " GoTo++", "")
     go_solve()
+
+def getRadec():
+    ra = nexus.get(":GR#").split(":")
+    dec = re.split(r"[:*]",nexus.get(":GD#"))
+    radec = (
+            float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
+        ), math.copysign(
+            abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
+            float(dec[0]),
+        )
+    return(radec)
+
+def gotoStopped():
+    radecNow = getRadec()
+    while True:
+        time.sleep(0.5)
+        radec = getRadec()
+        print(radec[0],radecNow[0],radec[1],radecNow[1])
+        if (abs(radecNow[0] - radec[0]) < 0.005) and (abs(radecNow[1] - radec[1]) < 0.01):
+            return
+        else:
+            radecNow = radec
 
 def reset_offset():
     global param, arr
@@ -450,7 +500,7 @@ home = [
     "",
     "left_right(1)",
     "align()",
-    "",
+    "goto()",
 ]
 nex = [
     "Nex: RA ",
@@ -589,28 +639,39 @@ arr = new_arr
 if nexus.is_aligned() == True:
     arr[0, 4][1] = "Nexus is aligned"
     arr[0, 4][0] = "'OK' syncs"
-    arr[2,0][1] = "Nexus is aligned"
+    #arr[2,0][1] = "Nexus is aligned"
 
 if param["Camera Type ('QHY' or 'ASI')"]=='ASI':
-    import ASICamera
-    camera = ASICamera.ASICamera(handpad)
+    import ASICamera2
+    camera = ASICamera2.ASICamera(handpad)
 elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
     import QHYCamera
     camera = QHYCamera.QHYCamera(handpad)
 
-handpad.display("ScopeDog eFinder", "ver " + version, "")
+if param["Drive ('scopedog' or 'servocat')"].lower()=='servocat':
+    import ServoCat
+    servocat = ServoCat.ServoCat()
+    sDog = False
+    print('ServoCat mode')
+    arr[2,0][1] = "ServoCat mode"
+else:
+    print('ScopeDog mode')
+    arr[2,0][1] = "ScopeDog mode"
+
+if param["Ramdisk"].lower()=='true':
+    destPath = "/var/tmp/"
+else:
+    destPath = home_path + "/Solver/images/"
+print('Working folder: '+destPath)
+
+handpad.display("ScopeDog eFinder", "ver " + version, "Drive: "+param["Drive ('scopedog' or 'servocat')"])
 time.sleep(3)
 button = ""
 
 scan = threading.Thread(target=reader)
 scan.daemon = True
 scan.start()
-'''
-time.sleep(2)
-scan2 = threading.Thread(target=home_refresh)
-scan2.daemon = True
-scan2.start()
-'''
+
 while True:  # next loop looks for button press and sets display option x,y
     if button == "20":
         exec(arr[x, y][7])

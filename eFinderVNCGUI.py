@@ -41,10 +41,12 @@ import threading
 import Nexus
 import Coordinates
 import Display
-import CameraInterface
-import ASICamera
+import Dummy
+import usbAssign
+#import CameraInterface
+#import ASICamera
 
-version = "18_1_VNC"
+version = "21_4_VNC"
 os.system("pkill -9 -f eFinder.py")  # comment out if this is the autoboot program
 
 home_path = str(Path.home())
@@ -57,17 +59,6 @@ image_height = 960
 image_width = 1280
 offset_new = offset_saved = offset = offset_reset = (0, 0)
 align_count = 0
-report = {
-    "N": "Not tracking",
-    "T": "Tracking",
-    "A": "AltAz mode",
-    "P": "EQ Mode",
-    "G": "GEM mode",
-    "0": "not aligned",
-    "1": "1-star aligned   ",
-    "2": "2-star aligned   ",
-    "3": "3-star aligned   ",
-}
 solved = False
 box_list = ["", "", "", "", "", ""]
 eye_piece = []
@@ -77,8 +68,17 @@ f_g = "red"
 b_g = "black"
 solved_radec = 0, 0
 usb = False
-pix_scale = 15
+pix_scale = 15.4
 scopeAlt = 0
+nexus_radec =(0,0)
+nexus_altaz = (0,0)
+sDog = True
+
+
+try:
+    os.mkdir("/var/tmp/solve")
+except:
+    pass
 
 def setup_sidereal():
     global LST, lbl_LST, lbl_UTC, lbl_date
@@ -123,7 +123,7 @@ def xy2rd(x, y):  # returns the RA & Dec (J2000) corresponding to an image x,y p
         [
             "wcs-xy2rd",
             "-w",
-            home_path + "/Solver/images/capture.wcs",
+            destPath + "capture.wcs",
             "-x",
             str(x),
             "-y",
@@ -155,44 +155,56 @@ def dxdy2pixel(dx, dy):
     dystr = "{: .1f}".format(float(60 * dy))  # +ve if finder is looking below Polaris
     return (pix_x, pix_y, dxstr, dystr)
 
+def setupNex():
+    global lbl_RA,lbl_Dec,lbl_Az,lbl_Alt
+    lbl_RA = Label(
+            window,
+            width=10,
+            text=coordinates.hh2dms(nexus_radec[0]),
+            anchor="e",
+            bg=b_g,
+            fg=f_g,
+        )
+    lbl_RA.place(x=225, y=804)
+    lbl_Dec = Label(
+            window,
+            width=10,
+            anchor="e",
+            text=coordinates.dd2dms(nexus_radec[1]),
+            bg=b_g,
+            fg=f_g,
+        )
+    lbl_Dec.place(x=225, y=826)
+    lbl_Az = Label(
+            window,
+            width=10,
+            anchor="e",
+            text=coordinates.ddd2dms(nexus_altaz[1]),
+            bg=b_g,
+            fg=f_g,
+        )
+    lbl_Az.place(x=225, y=870)
+    lbl_Alt = Label(
+            window,
+            width=10,
+            anchor="e",
+            text=coordinates.dd2dms(nexus_altaz[0]),
+            bg=b_g,
+            fg=f_g,
+        )
+    lbl_Alt.place(x=225, y=892)
 
 def readNexus():
     """Read the AltAz from the Nexus DSC and put the correct numbers on the GUI."""
+
     nexus.read_altAz(None)
     nexus_radec = nexus.get_radec()
     nexus_altaz = nexus.get_altAz()
-    tk.Label(
-        window,
-        width=10,
-        text=coordinates.hh2dms(nexus_radec[0]),
-        anchor="e",
-        bg=b_g,
-        fg=f_g,
-    ).place(x=225, y=804)
-    tk.Label(
-        window,
-        width=10,
-        anchor="e",
-        text=coordinates.dd2dms(nexus_radec[1]),
-        bg=b_g,
-        fg=f_g,
-    ).place(x=225, y=826)
-    tk.Label(
-        window,
-        width=10,
-        anchor="e",
-        text=coordinates.ddd2dms(nexus_altaz[1]),
-        bg=b_g,
-        fg=f_g,
-    ).place(x=225, y=870)
-    tk.Label(
-        window,
-        width=10,
-        anchor="e",
-        text=coordinates.dd2dms(nexus_altaz[0]),
-        bg=b_g,
-        fg=f_g,
-    ).place(x=225, y=892)
+    lbl_RA.config(text=coordinates.hh2dms(nexus_radec[0]))
+    lbl_Dec.config(text=coordinates.dd2dms(nexus_radec[1]))
+    lbl_Az.config(text=coordinates.ddd2dms(nexus_altaz[1]))
+    lbl_Alt.config(text=coordinates.dd2dms(nexus_altaz[0]))
+    lbl_RA.after(500, readNexus)
 
 
 def capture():
@@ -213,6 +225,7 @@ def capture():
         radec,
         m13,
         polaris_cap,
+        destPath,
     )
     image_show()
 
@@ -257,7 +270,7 @@ def solveImage():
     ]
     # "--temp-axy" We can't specify not to create the axy list, but we can write it to /tmp
     cmd = ["solve-field"]
-    captureFile = home_path + "/Solver/images/capture.jpg"
+    captureFile = destPath + "capture.jpg"
     options = (
         limitOptions + optimizedOptions + scaleOptions + fileOptions + [captureFile]
     )
@@ -266,7 +279,7 @@ def solveImage():
         cmd + name_that_star + options, capture_output=True, text=True
     )
     elapsed_time = time.time() - start_time
-    # print (result.stdout)
+    print (result.stdout)
     elapsed_time = str(elapsed_time)[0:4] + " sec"
     box_write("solved in " + elapsed_time, True)
     result = str(result.stdout)
@@ -288,7 +301,7 @@ def solveImage():
         tk.Label(window, text=elapsed_time, bg=b_g, fg=f_g).place(x=315, y=936)
         return
     if offset_flag == True:
-        table, h = fitsio.read(home_path + "/Solver/images/capture.axy", header=True)
+        table, h = fitsio.read(destPath + "capture.axy", header=True)
         star_name_offset = table[0][0], table[0][1]
         # print('(capture.axy gives) x,y',table[0][0],table[0][1])
         if "The star" in result:
@@ -342,7 +355,7 @@ def solveImage():
         fg=f_g,
     ).place(x=410, y=892)
     solved = True
-    box_write("solved", True)
+    #box_write("solved", True)
     deltaCalc()
     readTarget()
 
@@ -361,7 +374,7 @@ def applyOffset():  # creates & returns a 'Skyfield star object' at the set offs
 
 def image_show():
     global manual_angle, img3
-    img2 = Image.open(home_path + "/Solver/images/capture.jpg")
+    img2 = Image.open(destPath + "capture.jpg")
     width, height = img2.size
     img2 = img2.resize((1014, 760), Image.LANCZOS)  # original is 1280 x 960
     width, height = img2.size
@@ -442,7 +455,7 @@ def annotate_image():
     scale_low = str(pix_scale * 0.9 * 1.2)  # * 1.2 is because image has been resized for the display panel
     scale_high = str(pix_scale * 1.1 * 1.2)
     image_show()
-    img3 = img3.save(home_path + "/Solver/images/adjusted.jpg")
+    img3 = img3.save(destPath + "adjusted.jpg")
     # first need to re-solve the image as it is presented in the GUI, saved as 'adjusted.jpg'
     os.system(
         "solve-field --no-plots --new-fits none --solved none --match none --corr none \
@@ -453,8 +466,8 @@ def annotate_image():
             --scale-high "
         + scale_high
         + " "
-        + home_path
-        + "/Solver/images/adjusted.jpg"
+        + destPath
+        + "adjusted.jpg"
     )
     # now we can annotate the image adjusted.jpg
     opt1 = " " if bright.get() == "1" else " --no-bright"
@@ -486,18 +499,18 @@ def annotate_image():
             + opt5
             + " \
             "
-            + home_path
-            + "/Solver/images/adjusted.wcs "
-            + home_path
-            + "/Solver/images/adjusted.jpg "
-            + home_path
-            + "/Solver/images/adjusted_out.jpg"
+            + destPath
+            + "adjusted.wcs "
+            + destPath
+            + "adjusted.jpg "
+            + destPath
+            + "adjusted_out.jpg"
         )
     except:
         pass
-    if os.path.exists(home_path + "/Solver/images/adjusted_out.jpg") == True:
-        img3 = Image.open(home_path + "/Solver/images/adjusted_out.jpg")
-        filelist = glob.glob(home_path + "/Solver/images/adjusted*.*")
+    if os.path.exists(destPath + "adjusted_out.jpg") == True:
+        img3 = Image.open(destPath + "adjusted_out.jpg")
+        filelist = glob.glob(destPath + "adjusted*.*")
         for filePath in filelist:
             try:
                 os.remove(filePath)
@@ -545,47 +558,12 @@ def deltaCalc():
         x=315, y=892
     )
 
-
-def moveScope(dAz, dAlt):
-    azPulse = abs(dAz / float(param["azSpeed"]))  # seconds
-    altPulse = abs(dAlt / float(param["altSpeed"]))
-    print(
-        "%s %.2f  %s  %.2f %s" % ("azPulse:", azPulse, "altPulse:", altPulse, "seconds")
-    )
-    nexus.write("#:RG#")  # set move speed to guide
-    box_write("moving scope in Az", True)
-    print("moving scope in Az")
-    if dAz > 0:  # if +ve move scope left
-        nexus.write("#:Me#")
-        time.sleep(azPulse)
-        nexus.write("#:Q#")
-    else:
-        nexus.write("#:Mw#")
-        time.sleep(azPulse)
-        nexus.write("#:Q#")
-    time.sleep(0.2)
-    box_write("moving scope in Alt", True)
-    print("moving scope in Alt")
-    nexus.write("#:RG#")
-    if dAlt > 0:  # if +ve move scope down
-        nexus.write("#:Ms#")
-        time.sleep(altPulse)
-        nexus.write("#:Q#")
-    else:
-        nexus.write("#:Mn#")
-        time.sleep(altPulse)
-        nexus.write("#:Q#")
-    box_write("move finished", True)
-    print("move finished")
-    time.sleep(1)
-
-
 def align():  # sends the Nexus the solved RA & Dec (JNow) as an align or sync point. LX200 protocol.
     global align_count,p
     # readNexus()
     capture()
     solveImage()
-    readNexus()
+    #readNexus()
     if solved == False:
         return
     align_ra = ":Sr" + coordinates.dd2dms((solved_radec)[0]) + "#"
@@ -621,14 +599,14 @@ def align():  # sends the Nexus the solved RA & Dec (JNow) as an align or sync p
         x=20, y=600
     )
     tk.Label(window, text="Nexus report: " + p[0:3], bg=b_g, fg=f_g).place(x=20, y=620)
-    readNexus()
+    #readNexus()
     deltaCalc()
 
 
 def measure_offset():
     global offset_new, scope_x, scope_y, offset_flag
     offset_flag = True
-    readNexus()
+    #readNexus()
     capture()
     solveImage()
     if solved == False:
@@ -710,13 +688,13 @@ def reset_offset():
 def image():
     global handpad
     handpad.display("Get information from Nexus", "", "")
-    readNexus()
+    #readNexus()
     handpad.display("Capture image", "", "")
     capture()
 
 
 def solve():
-    readNexus()
+    #readNexus()
     handpad.display("Solving image", "", "")
     solveImage()
     image_show()
@@ -773,23 +751,24 @@ def readTarget():
         bg=b_g,
         fg=f_g,
     ).place(x=605, y=892)
-    dt_Az = solved_altaz[1] - goto_altaz[1]
-    if abs(dt_Az) > 180:
-        if dt_Az < 0:
-            dt_Az = dt_Az + 360
-        else:
-            dt_Az = dt_Az - 360
-    dt_Az = 60 * (dt_Az * math.cos(scopeAlt))  # actually this is delta'x' in arcminutes
-    dt_Alt = solved_altaz[0] - goto_altaz[0]
-    dt_Alt = 60 * (dt_Alt)  # in arcminutes
-    dt_Azstr = "{: .1f}".format(float(dt_Az)).ljust(8)[:8]
-    dt_Altstr = "{: .1f}".format(float(dt_Alt)).ljust(8)[:8]
-    tk.Label(window, width=10, anchor="e", text=dt_Azstr, bg=b_g, fg=f_g).place(
-        x=500, y=870
-    )
-    tk.Label(window, width=10, anchor="e", text=dt_Altstr, bg=b_g, fg=f_g).place(
-        x=500, y=892
-    )
+    if solved == True:
+        dt_Az = solved_altaz[1] - goto_altaz[1]
+        if abs(dt_Az) > 180:
+            if dt_Az < 0:
+                dt_Az = dt_Az + 360
+            else:
+                dt_Az = dt_Az - 360
+        dt_Az = 60 * (dt_Az * math.cos(scopeAlt))  # actually this is delta'x' in arcminutes
+        dt_Alt = solved_altaz[0] - goto_altaz[0]
+        dt_Alt = 60 * (dt_Alt)  # in arcminutes
+        dt_Azstr = "{: .1f}".format(float(dt_Az)).ljust(8)[:8]
+        dt_Altstr = "{: .1f}".format(float(dt_Alt)).ljust(8)[:8]
+        tk.Label(window, width=10, anchor="e", text=dt_Azstr, bg=b_g, fg=f_g).place(
+            x=500, y=870
+        )
+        tk.Label(window, width=10, anchor="e", text=dt_Altstr, bg=b_g, fg=f_g).place(
+            x=500, y=892
+        )
 
 
 def goto():
@@ -799,40 +778,47 @@ def goto():
     if solved == False:
         box_write("solve failed", True)
         return
-    nexus.write(":Sr" + goto_ra + "#")
-    nexus.write(":Sd" + goto_dec + "#")
-    reply = nexus.get(":MS#")
-    time.sleep(0.1)
-    box_write("moving scope", True)
+    if sDog == True:
+        nexus.write(":Sr" + goto_ra + "#")
+        nexus.write(":Sd" + goto_dec + "#")
+        reply = nexus.get(":MS#")
+        box_write("ScopeDog goto++", True)
+    else:
+        gotoStr = '%s%06.3f %+06.3f' %("g",goto_radec[0],goto_radec[1])
+        print('GoToStr: ',gotoStr)
+        servocat.send(gotoStr)
+        box_write("ServoCat goto++", True)
+    gotoStopped()
+    box_write("Goto finished", True)
 
+def stopSlew():
+    if sDog == True:
+        nexus.write(":Q#")
+    else:
+        servocat.send ("g99.999 +99.999")
+    box_write("Slew stop", True)
 
-def move():
-    solveImage()
-    image_show()
-    if solved == False:
-        box_write("no solution yet", True)
-        return
-    goto_ra = nexus.get(":Gr#").split(":")
-    goto_dec = re.split(r"[:*]", nexus.get(":Gd#"))
-    if goto_ra[0] == "00" and goto_ra[1] == "00":  # not a valid goto target set yet.
-        box_write("no GoTo target", True)
-        return
-    print("goto RA & Dec", goto_ra, goto_dec)
-    ra = float(goto_ra[0]) + float(goto_ra[1]) / 60 + float(goto_ra[2]) / 3600
-    dec = float(goto_dec[0]) + float(goto_dec[1]) / 60 + float(goto_dec[2]) / 3600
-    print("goto radec", ra, dec)
-    alt_g, az_g = coordinates.conv_altaz(nexus, ra, dec)
-    print("target Az Alt", az_g, alt_g)
-    delta_Az = (az_g - solved_altaz[1]) * 60  # +ve move scope right
-    delta_Alt = (alt_g - solved_altaz[0]) * 60  # +ve move scope up
-    delta_Az_str = "{: .2f}".format(delta_Az)
-    delta_Alt_str = "{: .2f}".format(delta_Alt)
-    print("deltaAz, deltaAlt:", delta_Az_str, delta_Alt_str)
-    box_write("deltaAz : " + delta_Az_str, True)
-    box_write("deltaAlt: " + delta_Alt_str, True)
-    moveScope(delta_Az, delta_Alt)
-    # could insert a new capture and solve?
+def getRadec():
+    ra = nexus.get(":GR#").split(":")
+    dec = re.split(r"[:*]",nexus.get(":GD#"))
+    radec = (
+            float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
+        ), math.copysign(
+            abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
+            float(dec[0]),
+        )
+    return(radec)
 
+def gotoStopped():
+    radecNow = getRadec()
+    while True:
+        time.sleep(0.5)
+        radec = getRadec()
+        print(radec[0],radecNow[0],radec[1],radecNow[1])
+        if (abs(radecNow[0] - radec[0]) < 0.005) and (abs(radecNow[1] - radec[1]) < 0.01):
+            return
+        else:
+            radecNow = radec
 
 def on_closing():
     save_param()
@@ -846,7 +832,7 @@ def box_write(new_line, show_handpad):
         box_list[i] = box_list[i - 1]
     box_list[0] = (t.utc_strftime("%H:%M:%S ") + new_line).ljust(36)[:35]
     for i in range(0, 5, 1):
-        tk.Label(window, text=box_list[i], bg=b_g, fg=f_g).place(x=1050, y=980 - i * 16)
+        tk.Label(window, text=box_list[i], bg=b_g, fg=f_g).place(x=1050, y=980 - i * 18)
 
 def reader():
     global button
@@ -916,9 +902,21 @@ def setTarget():
     nexus.write(":Sd" + gDec + "#")
     box_write("GoTo target set",True)
     
+def saveImage():
+    stamp = camera.get_capture_time()
+    copyfile(destPath+"capture.jpg",home_path + "/Solver/Stills/" + stamp + ".jpg")
+
 
 # main code starts here
-handpad = Display.Handpad(version)
+usbtty = usbAssign.usbAssign()
+try:
+    if usbtty.get_handbox_usb():
+        handpad = Display.Handpad(version)
+        scan = threading.Thread(target=reader)
+        scan.daemon = True
+        scan.start()
+except:
+    handpad = Dummy.Handpad(version)
 coordinates = Coordinates.Coordinates()
 nexus = Nexus.Nexus(handpad, coordinates)
 NexStr = nexus.get_nex_str()
@@ -932,11 +930,23 @@ ts = load.timescale()
 nexus.read()
 
 if param["Camera Type ('QHY' or 'ASI')"]=='ASI':
-    import ASICamera
-    camera = ASICamera.ASICamera(handpad)
+    import ASICamera2
+    camera = ASICamera2.ASICamera(handpad)
 elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
     import QHYCamera
     camera = QHYCamera.QHYCamera(handpad)
+
+if param["Drive ('scopedog' or 'servocat')"].lower()=='servocat':
+    import ServoCat
+    servocat = ServoCat.ServoCat()
+    sDog = False
+
+if param["Ramdisk"].lower()=='true':
+    destPath = "/var/tmp/solve/"
+else:
+    destPath = home_path + "/Solver/images/"
+print('Working folder: '+destPath)
+
 
 handpad.display('Up: Align','OK: Solve','Dn: GoTo++')
 # main program loop, using tkinter GUI
@@ -948,6 +958,7 @@ window.bind("<<OLED_Button>>", do_button)
 
 window.option_add( "*font", "Helvetica 12 bold" )
 setup_sidereal()
+setupNex()
 
 sid = threading.Thread(target=sidereal)
 sid.daemon = True
@@ -955,10 +966,12 @@ sid.start()
 
 button = ""
 
-scan = threading.Thread(target=reader)
-scan.daemon = True
-scan.start()
 
+
+nex = threading.Thread(target=readNexus)
+nex.daemon = True
+nex.start()
+box_write(param["Drive ('scopedog' or 'servocat')"]+' mode',True)
 tk.Label(window, text="Date",fg=f_g, bg=b_g).place(x=15, y=0)
 tk.Label(window, text="UTC", bg=b_g, fg=f_g).place(x=15, y=22)
 tk.Label(window, text="LST", bg=b_g, fg=f_g).place(x=15, y=44)
@@ -1045,6 +1058,18 @@ tk.Checkbutton(
     fg=f_g,
     variable=test,
 ).pack(padx=1, pady=1)
+tk.Button(
+    options_frame,
+    text="Save Image",
+    bg=b_g,
+    fg=f_g,
+    activebackground="red",
+    highlightbackground="red",
+    bd=0,
+    height=2,
+    width=10,
+    command=saveImage,
+).pack(padx=1, pady=10)
 
 box_write("ccd is " + camera.get_cam_type(), False)
 box_write("Nexus " + NexStr, True)
@@ -1104,15 +1129,16 @@ tk.Button(
 ).pack(padx=1, pady=5)
 tk.Button(
     but_frame,
-    text="GoTo: via Move",
+    text="STOP",
     activebackground="red",
     highlightbackground="red",
+    highlightthickness=3,
     bd=0,
     height=2,
     width=10,
     bg=b_g,
     fg=f_g,
-    command=move,
+    command=stopSlew,
 ).pack(padx=1, pady=5)
 
 off_frame = Frame(window, bg="black")
@@ -1185,16 +1211,12 @@ tk.Label(window, text="0,0", bg=b_g, fg=f_g, width=6).place(x=60, y=400)
 
 nex_frame = Frame(window, bg="black")
 nex_frame.place(x=250, y=766)
-tk.Button(
+tk.Label(
     nex_frame,
     text="Nexus",
     bg=b_g,
     fg=f_g,
-    activebackground="red",
-    highlightbackground="red",
-    bd=0,
-    command=readNexus,
-).pack(padx=1, pady=1)
+).pack(padx=1, pady=5)
 
 tk.Label(window, text="delta x,y", bg=b_g, fg=f_g).place(x=345, y=770)
 tk.Label(window, text="Solution", bg=b_g, fg=f_g).place(x=435, y=770)
@@ -1510,5 +1532,10 @@ tk.Checkbutton(
     ).pack(padx=1, pady=0)    
 get_offset()
 use_loaded_offset()
+p = nexus.get(":GW#")
+print("Align status reply ", p[0:3])
+box_write("Align reply:" + p[0:3], True)
+tk.Label(window, text="Nexus report: " + p[0:3], bg=b_g, fg=f_g).place(x=20, y=620)
+
 window.protocol("WM_DELETE_WINDOW", on_closing)
 window.mainloop()

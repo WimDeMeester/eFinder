@@ -1,6 +1,8 @@
 from pathlib import Path
 from shutil import copyfile
 import time
+import datetime
+from datetime import timezone
 from CameraInterface import CameraInterface
 import zwoasi as asi
 import Display
@@ -17,6 +19,7 @@ class ASICamera(CameraInterface):
 
         self.home_path = str(Path.home())
         self.handpad = handpad
+        self.stamp = ""
 
         # find a camera
         asi.init("/lib/zwoasi/armv7/libASICamera2.so")
@@ -54,8 +57,7 @@ class ASICamera(CameraInterface):
         camera.set_image_type(asi.ASI_IMG_RAW8)
 
     def capture(
-        self, exposure_time: float, gain: float, radec: str, m13: bool, polaris: bool
-    ) -> None:
+        self, exposure_time: float, gain: float, radec: str, m13: bool, polaris: bool, destPath: str) -> None:
         """Capture an image with the camera
 
         Parameters:
@@ -64,6 +66,7 @@ class ASICamera(CameraInterface):
         radec (str): The Ra and Dec
         m13 (bool): True if the example image of M13 should be used
         polaris (bool): True if the example image of Polaris should be used
+        destPath (str): path to folder to save images, depends on Ramdisk selection
         """
         if self.camType == "not found":
             self.handpad.display("camera not found", "", "")
@@ -76,17 +79,26 @@ class ASICamera(CameraInterface):
         if m13 == True:
             copyfile(
                 self.home_path + "/Solver/test.jpg",
-                self.home_path + "/Solver/images/capture.jpg",
+                destPath+"capture.jpg",
             )
         elif polaris == True:
             copyfile(
                 self.home_path + "/Solver/polaris.jpg",
-                self.home_path + "/Solver/images/capture.jpg",
+                destPath+"capture.jpg",
             )
             print("using Polaris")
         else:
-            camera.capture(filename=self.home_path + "/Solver/images/capture.jpg")
+            camera.capture(filename=destPath+"capture.jpg")
+        sta = datetime.datetime.now(timezone.utc)
+        self.stamp = sta.strftime("%d%m%y_%H%M%S")
         return
+    
+    def get_capture_time(self) -> str:
+        """Returns the date & time as UTC of the last image capture
+
+        Returns:
+        str: ddmmyy_hhmmss"""
+        return self.stamp
 
     def get_cam_type(self) -> str:
         """Return the type of the camera

@@ -2,6 +2,7 @@ import time
 import serial
 import threading
 import select
+import usbAssign
 
 
 class Handpad:
@@ -13,10 +14,11 @@ class Handpad:
         Parameters:
         version (str): The version of the eFinder software
         """
+        usbtty = usbAssign.usbAssign()
         self.version = version
         try:
             self.box = serial.Serial(
-                "/dev/ttyACM0",
+                usbtty.get_handbox_usb(),
                 baudrate=115200,
                 stopbits=serial.STOPBITS_ONE,
                 bytesize=serial.EIGHTBITS,

@@ -12,6 +12,7 @@ SCK = 10
 CS = 9
 ln = ["ScopeDog","with eFinder","waiting for host"]
 
+version = "main_eF1_2"
 
 class OLED_2inch23(framebuf.FrameBuffer):
     def __init__(self):
@@ -89,17 +90,19 @@ class OLED_2inch23(framebuf.FrameBuffer):
                 self.write_data(self.buffer[page*128+num])
 
 def send_pin(p):
-    n=0
-    for n in range(5):
-        if p.value()== True: 
-            return
-    time.sleep(0.3)
-    if p.value()==True:
-        print(str(p)[8:10])
-    elif str(p)[8:10
-                ]=='20':
-        print("21")
-    time.sleep(0.1)
+    try:
+        n=0
+        for n in range(5):
+            if p.value()== True: 
+                return
+        time.sleep(0.3)
+        if p.value()==True:
+            print(str(p)[4:6])
+        elif str(p)[4:6]=='20':
+            print("21")
+        time.sleep(0.1)
+    except:
+        pass
 
 def read_joystick():
     ref_x = '42'
@@ -202,26 +205,37 @@ if __name__=='__main__':
 
     _thread.start_new_thread(read_joystick, ())
     
+    if select_button.value() == 0:
+        OLED.fill(0x0000) 
+        OLED.text(ln[0],1,1,OLED.white)
+        OLED.text("hand pad code",1,12,OLED.white)
+        OLED.text(version,1,23,OLED.white)
+        OLED.show()
+        exit()
+    
     while True:
-        if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-            ch = sys.stdin.readline().strip('\n')
-            y = int(ch[0:1])
-            ln[y] = ch[2:]
-            if ln[2][0:10] == 'Brightness':
-                ln[2] = 'Brightness '+str(contrast)
-                dim_display(contrast)
-                save_contrast(contrast)
-            if ln[2][0:10] == 'Bright Adj':
-                ln[2] = 'Bright Adj '+str(contrast)
-                up.irq(trigger=Pin.IRQ_FALLING, handler=adj_brightness)
-                down.irq(trigger=Pin.IRQ_FALLING, handler=adj_brightness)
+        try:
+            if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                ch = sys.stdin.readline().strip('\n')
+                y = int(ch[0:1])
+                ln[y] = ch[2:]
+                if ln[2][0:10] == 'Brightness':
+                    ln[2] = 'Brightness '+str(contrast)
+                    dim_display(contrast)
+                    save_contrast(contrast)
+                if ln[2][0:10] == 'Bright Adj':
+                    ln[2] = 'Bright Adj '+str(contrast)
+                    up.irq(trigger=Pin.IRQ_FALLING, handler=adj_brightness)
+                    down.irq(trigger=Pin.IRQ_FALLING, handler=adj_brightness)
 
-            else:
-                up.irq(trigger=Pin.IRQ_FALLING, handler=send_pin)
-                down.irq(trigger=Pin.IRQ_FALLING, handler=send_pin)
-            OLED.fill(0x0000) 
-            #OLED.show()
-            OLED.text(ln[0],1,1,OLED.white)
-            OLED.text(ln[1],1,12,OLED.white)
-            OLED.text(ln[2],1,23,OLED.white)
-            OLED.show()
+                else:
+                    up.irq(trigger=Pin.IRQ_FALLING, handler=send_pin)
+                    down.irq(trigger=Pin.IRQ_FALLING, handler=send_pin)
+                OLED.fill(0x0000) 
+                #OLED.show()
+                OLED.text(ln[0],1,1,OLED.white)
+                OLED.text(ln[1],1,12,OLED.white)
+                OLED.text(ln[2],1,23,OLED.white)
+                OLED.show()
+        except:
+                pass
