@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-# Program to implement an eFinder (electronic finder) on Alt Az telescopes
-# Copyright (C) 2023 Keith Venables.
+# Program to implement an eFinder (electronic finder) on motorised Alt Az telescopes
+# Copyright (C) 2022 Keith Venables.
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -10,8 +10,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# This variant is customised for ZWO ASI or QHY ccds as camera
-# Itrequires a GPS USB dongle, and GPSD & GPS3 installed.
+# This variant is customised for ZWO ASI ccds as camera, Nexus DSC as telescope interface
 # It requires astrometry.net installed
 
 import subprocess
@@ -21,22 +20,21 @@ import math
 from PIL import Image
 import psutil
 import re
-from skyfield.api import Star, load
+from skyfield.api import Star
 import numpy as np
 import threading
 import select
 from pathlib import Path
 import fitsio
-import socket
+import Nexus
 import Coordinates
 import Display
 import ASICamera
 import CameraInterface
-import gps_loc
-from datetime import datetime
-
+import ServoCat
+from shutil import copyfile
 home_path = str(Path.home())
-version = "19_2"
+version = "20_1"
 os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
@@ -48,46 +46,8 @@ star_name = "no star"
 solve = False
 sync_count = 0
 pix_scale = 15
-
-raPacket = "03:01:21#"
-decPacket = "+89*21:46#"
-host = ''
-port = 4060
-backlog = 5
-size = 1024
-
-def lx200Socket():
-    global raPacket, decPacket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((host,port))
-    s.listen(backlog)
-    try:
-        while True:
-            client, address = s.accept()
-            data = client.recv(size)
-            if data:
-                pkt = data.decode("utf-8","ignore")
-                #print(pkt,end=": ")
-                time.sleep(0.1)
-                a = pkt.split('#')
-                #print(a)
-                for x in a:
-                    if x != '':
-                        if x == ':GR':
-                            #print("sending RA",raPacket)
-                            time.sleep(0.1)
-                            client.send(bytes(raPacket.encode('ascii')))
-                        elif x == ':GD':
-                            #print("sending Dec",decPacket)
-                            time.sleep(.1)
-                            client.send(bytes(decPacket.encode('ascii')))
-        
-              
-    except:
-        print('Socket problem')
-        client.close()
-        exit()
+copyfile("/usr/local/astrometry/data/index-4112.fits","/var/tmp/index-4112.fits")
+copyfile("/usr/local/astrometry/data/index-4113.fits","/var/tmp/index-4113.fits")
 
 def xy2rd(x, y):  # returns the RA & Dec equivalent to a camera pixel x,y
     result = subprocess.run(
@@ -132,7 +92,7 @@ def imgDisplay():  # displays the captured image on the Pi desktop.
     im.show()
 
 def solveImage():
-    global raPacket, decPacket, offset_flag, solve, solvedPos, elapsed_time, star_name, star_name_offset, solved_radec, solved_altaz
+    global offset_flag, solve, solvedPos, elapsed_time, star_name, star_name_offset, solved_radec, solved_altaz
     scale_low = str(pix_scale * 0.9)
     scale_high = str(pix_scale * 1.1)
     name_that_star = ([]) if (offset_flag == True) else (["--no-plots"])
@@ -202,17 +162,13 @@ def solveImage():
     solvedPos = applyOffset()
     ra, dec, d = solvedPos.apparent().radec(coordinates.get_ts().now())
     solved_radec = ra.hours, dec.degrees
-    raPacket = coordinates.hh2dms(solved_radec[0])+'#'
-    decPacket = coordinates.dd2aligndms(solved_radec[1])+'#'
-    print (raPacket,decPacket)
-    solved_altaz = coordinates.conv_altaz(geo, *(solved_radec))
-    arr[0, 0][0] = "Sol: RA " + coordinates.hh2dms(solved_radec[0])
-    arr[0, 0][1] = "   Dec " + coordinates.dd2dms(solved_radec[1])
-    arr[0, 0][2] = "time: " + str(elapsed_time)[0:4] + " s"
-    arr[0, 1][0] = "Sol: Az " + coordinates.ddd2dms(solved_altaz[1])
-    arr[0, 1][1] = "   Alt " + coordinates.dd2dms(solved_altaz[0])
-    arr[0, 1][2] = "time: " + str(elapsed_time)[0:4] + " s"
+    solved_altaz = coordinates.conv_altaz(nexus, *(solved_radec))
+    nexus.set_scope_alt(solved_altaz[0] * math.pi / 180)
+    arr[0, 2][0] = "Sol: RA " + coordinates.hh2dms(solved_radec[0])
+    arr[0, 2][1] = "   Dec " + coordinates.dd2dms(solved_radec[1])
+    arr[0, 2][2] = "time: " + str(elapsed_time)[0:4] + " s"
     solve = True
+    deltaCalc()
 
 def applyOffset():
     x_offset, y_offset, dxstr, dystr = dxdy2pixel(
@@ -224,29 +180,81 @@ def applyOffset():
         ra_hours=ra / 15, dec_degrees=dec
     )  # will set as J2000 as no epoch input
     solvedPos_scope = (
-        geo.get_location().at(coordinates.get_ts().now()).observe(solved)
+        nexus.get_location().at(coordinates.get_ts().now()).observe(solved)
     )  # now at Jnow and current location
     return solvedPos_scope
 
 def deltaCalc():
     global deltaAz, deltaAlt, elapsed_time
-    saved_altaz = coordinates.conv_altaz(geo, *(saved_radec))
-    deltaAz = solved_altaz[1] - saved_altaz[1]
+    deltaAz = solved_altaz[1] - nexus.get_altAz()[1]
     if abs(deltaAz) > 180:
         if deltaAz < 0:
             deltaAz = deltaAz + 360
         else:
             deltaAz = deltaAz - 360
     deltaAz = 60 * (
-        deltaAz * math.cos(solved_altaz[0]*math.pi/180)
+        deltaAz * math.cos(nexus.get_scope_alt())
     )  # actually this is delta'x' in arcminutes
-    deltaAlt = solved_altaz[0] - saved_altaz[0]
+    deltaAlt = solved_altaz[0] - nexus.get_altAz()[0]
     deltaAlt = 60 * (deltaAlt)  # in arcminutes
     deltaXstr = "{: .2f}".format(float(deltaAz))
     deltaYstr = "{: .2f}".format(float(deltaAlt))
-    arr[0, 2][0] = "Delta: x= " + deltaXstr
-    arr[0, 2][1] = "       y= " + deltaYstr
-    arr[0, 2][2] = "time: " + str(elapsed_time)[0:4] + " s"
+    arr[0, 3][0] = "Delta: x= " + deltaXstr
+    arr[0, 3][1] = "       y= " + deltaYstr
+    arr[0, 3][2] = "time: " + str(elapsed_time)[0:4] + " s"
+
+def align():
+    global align_count, solve, sync_count, param, offset_flag, arr, x,y
+    new_arr = nexus.read_altAz(arr)
+    arr = new_arr
+    capture()
+    imgDisplay()
+    solveImage()
+    if solve == False:
+        handpad.display(arr[x, y][0], "Solved Failed", arr[x, y][2])
+        return
+    align_ra = ":Sr" + coordinates.dd2dms((solved_radec)[0]) + "#"
+    align_dec = ":Sd" + coordinates.dd2aligndms((solved_radec)[1]) + "#"
+    valid = nexus.get(align_ra)
+    print(align_ra)
+    if valid == "0":
+        print("invalid position")
+        handpad.display(arr[x, y][0], "Invalid position", arr[x, y][2])
+        time.sleep(3)
+        return
+    valid = nexus.get(align_dec)
+    print(align_dec)
+    if valid == "0":
+        print("invalid position")
+        handpad.display(arr[x, y][0], "Invalid position", arr[x, y][2])
+        time.sleep(3)
+        return
+    reply = nexus.get(":CM#")
+    print("reply: ", reply)
+    p = nexus.get(":GW#")
+    print("Align status reply ", p)
+    print(nexus.is_aligned())
+    if nexus.is_aligned() == False: # wasnt aligned before this action
+        align_count += 1    
+        if p[1] != "T": # and still not aligned
+            arr[0,4][0] = "'OK' aligns"
+            arr[0,4][1] = "Align count " + str(align_count)
+            arr[0,4][2] = "Nexus reply:" + p[0:3]
+            handpad.display(arr[0,4][0],arr[0,4][1],arr[0,4][2])
+        else: 
+            arr[0,4][0] = "'OK' now syncs"
+            arr[0,4][1] = "Sync count " + str(sync_count)
+            arr[0,4][2] = "Nexus reply:" + p[0:3]
+            arr[2,0][1] = "Nexus is aligned"
+            handpad.display(arr[0,4][0],arr[0,4][1],arr[0,4][2])           
+            nexus.set_aligned(True)
+    else:
+        sync_count +=1
+        arr[0,4][0] = "'OK' syncs"
+        arr[0,4][1] = "Sync count " + str(sync_count)
+        arr[0,4][2] = ""
+        handpad.display(arr[0,4][0],arr[0,4][1],arr[0,4][2])
+    return
 
 def measure_offset():
     global offset_str, offset_flag, param, scope_x, scope_y, star_name
@@ -318,7 +326,7 @@ def capture():
     else:
         m13 = False
         polaris_cap = False
-    radec = "RADec"
+    radec = nexus.get_short()
     camera.capture(
         int(float(param["Exposure"]) * 1000000),
         int(float(param["Gain"])),
@@ -328,9 +336,9 @@ def capture():
     )
 
 def go_solve():
-    global x, y, solve, arr, saved_radec
-    #new_arr = nexus.read_altAz(arr)
-    #arr = new_arr
+    global x, y, solve, arr
+    new_arr = nexus.read_altAz(arr)
+    arr = new_arr
     handpad.display("Image capture", "", "")
     capture()
     imgDisplay()
@@ -341,38 +349,58 @@ def go_solve():
     else:
         handpad.display("Not Solved", "", "")
         return
-    
-    if x == 0 and y == 2:
-            try:
-                deltaCalc()
-            except:
-                pass    
-            handpad.display(arr[0,2][0], arr[0,2][1], arr[0,2][2])
-    else:
-        x = 0
-        y = 0
-        handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
-
-def save_position():
-    global x, y, solve, arr, saved_radec
-    #new_arr = nexus.read_altAz(arr)
-    #arr = new_arr
-    handpad.display("Image capture", "", "")
-    capture()
-    imgDisplay()
-    handpad.display("Plate solving", "", "")
-    solveImage()
-    if solve == True:
-        handpad.display("Solved", "", "")
-        saved_radec = solved_radec
-    else:
-        handpad.display("Not Solved", "", "")
-        return
-    deltaCalc()
     x = 0
-    y = 0
+    y = 3
     handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
 
+def goto():
+    handpad.display("Attempting", "GoTo++", "")
+    goto_ra = nexus.get(":Gr#").split(":")
+    if (
+        goto_ra[0] == "00" and goto_ra[1] == "00"
+    ):  # not a valid goto target set yet.
+        print("no GoTo target")
+        handpad.display("no GoTo target","set yet","")
+        return
+    goto_dec = re.split(r"[:*]",nexus.get(":Gd#"))
+    goto_radec = (
+            float(goto_ra[0]) + float(goto_ra[1]) / 60 + float(goto_ra[2]) / 3600
+        ), math.copysign(
+            abs(abs(float(goto_dec[0])) + float(goto_dec[1]) / 60 + float(goto_dec[2]) / 3600),
+            float(goto_dec[0]),
+        )
+    gotoStr = '%s%06.3f %+06.3f' %("g",goto_radec[0],goto_radec[1])
+    print("Target goto RA & Dec", gotoStr)
+    align()
+    if solve == False:
+        handpad.display("problem", "solving", "")
+        return
+    servocat.send(gotoStr)
+    handpad.display("Performing", " GoTo++", "")
+    gotoStopped()
+    handpad.display("Finished", " GoTo++", "")
+    go_solve()
+
+def getRadec():
+    ra = nexus.get(":GR#").split(":")
+    dec = re.split(r"[:*]",nexus.get(":GD#"))
+    radec = (
+            float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
+        ), math.copysign(
+            abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
+            float(dec[0]),
+        )
+    return(radec)
+
+def gotoStopped():
+    radecNow = getRadec()
+    while True:
+        time.sleep(0.5)
+        radec = getRadec()
+        if (abs(radecNow[0] - radec[0]) < 0.01) and (abs(radecNow[1] - radec[1]) < 0.1):
+            return
+        else:
+            radecNow = radec
 
 def reset_offset():
     global param, arr
@@ -417,11 +445,11 @@ def home_refresh():
         if x == 0 and y == 0:
             time.sleep(1)
         while x ==0 and y==0:
-            #nexus.read_altAz(arr)
-            #radec = nexus.get_radec()
-            #ra = coordinates.hh2dms(radec[0])
-            #dec = coordinates.dd2dms(radec[1])
-            #handpad.display('Nexus live',' RA:  '+ra, 'Dec: '+dec)
+            nexus.read_altAz(arr)
+            radec = nexus.get_radec()
+            ra = coordinates.hh2dms(radec[0])
+            dec = coordinates.dd2dms(radec[1])
+            handpad.display('Nexus live',' RA:  '+ra, 'Dec: '+dec)
             time.sleep(0.5)
         else:
             handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
@@ -432,52 +460,71 @@ def home_refresh():
 
 handpad = Display.Handpad(version)
 coordinates = Coordinates.Coordinates()
-geo = gps_loc.GPSread(handpad, coordinates)
-geo.read()
-
-#nexus = Nexus.Nexus(handpad, coordinates)
-#nexus.read()
+nexus = Nexus.Nexus(handpad, coordinates)
+nexus.read()
 param = dict()
 get_param()
-
+servocat = ServoCat.ServoCat()
 # array determines what is displayed, computed and what each button does for each screen.
 # [first line,second line,third line, up button action,down...,left...,right...,select button short press action, long press action]
 # empty string does nothing.
 # example: left_right(-1) allows left button to scroll to the next left screen
 # button texts are infact def functions
 p = ""
-solRaDec = [
-    "Sol:RA ",
-    "    Dec ",
-    "",
+home = [
+    "Nexus live",
+    " RA:",
+    "Dec:",
     "",
     "up_down(1)",
     "",
     "left_right(1)",
-    "go_solve()",
-    "save_position()",
+    "align()",
+    "goto()",
 ]
-solAltAz = [
-    "Sol: Az ",
-    "    Alt ",
+nex = [
+    "Nex: RA ",
+    "    Dec ",
     "",
     "",
     "",
     "left_right(-1)",
     "left_right(1)",
     "go_solve()",
-    "save_position()",
+    "goto()",
+]
+sol = [
+    "No solution yet",
+    "'OK' solves",
+    "",
+    "",
+    "",
+    "left_right(-1)",
+    "left_right(1)",
+    "go_solve()",
+    "goto()",
 ]
 delta = [
-    "Delta: Not saved",
+    "Delta: No solve",
     "'OK' solves",
-    "'long OK' saves",
+    "",
+    "",
+    "",
+    "left_right(-1)",
+    "left_right(1)",
+    "go_solve()",
+    "goto()",
+]
+aligns = [
+    "'OK' aligns",
+    "not aligned yet",
+    str(p),
     "",
     "",
     "left_right(-1)",
     "",
-    "go_solve()",
-    "save_position()",
+    "align()",
+    "",
 ]
 polar = [
     "'OK' Bright Star",
@@ -511,7 +558,7 @@ exp = [
     "left_right(-1)",
     "left_right(1)",
     "go_solve()",
-    "",
+    "goto()",
 ]
 gn = [
     "Gain",
@@ -522,7 +569,7 @@ gn = [
     "left_right(-1)",
     "left_right(1)",
     "go_solve()",
-    "",
+    "goto()",
 ]
 mode = [
     "Test mode",
@@ -533,18 +580,18 @@ mode = [
     "left_right(-1)",
     "",
     "go_solve()",
-    "",
+    "goto()",
 ]
 status = [
-    "Long: "+"{:7.2f}".format(geo.get_long()),
-    "Lat:  "+"{:7.2f}".format(geo.get_lat()),
+    "Nexus via " + nexus.get_nexus_link(),
+    "Nex align " + str(nexus.is_aligned()),
     "Brightness",
     "up_down(-1)",
     "",
     "",
     "left_right(1)",
     "go_solve()",
-    "",
+    "goto()",
 ]
 bright = [
     "Handpad",
@@ -555,11 +602,11 @@ bright = [
     "left_right(-1)",
     "refresh()",
     "go_solve()",
-    "",
+    "goto()",
 ]
 arr = np.array(
     [
-        [solRaDec, solAltAz, delta, solAltAz, solAltAz],
+        [home, nex, sol, delta, aligns],
         [summary, exp, gn, mode, mode],
         [status, polar, reset, bright, bright],
     ]
@@ -567,9 +614,12 @@ arr = np.array(
 update_summary()
 deg_x, deg_y, dxstr, dystr = dxdy2pixel(float(param["d_x"]), float(param["d_y"]))
 offset_str = dxstr + "," + dystr
-#new_arr = nexus.read_altAz(arr)
-#arr = new_arr
-
+new_arr = nexus.read_altAz(arr)
+arr = new_arr
+if nexus.is_aligned() == True:
+    arr[0, 4][1] = "Nexus is aligned"
+    arr[0, 4][0] = "'OK' syncs"
+    arr[2,0][1] = "Nexus is aligned"
 
 if param["Camera Type ('QHY' or 'ASI')"]=='ASI':
     import ASICamera
@@ -581,16 +631,16 @@ elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
 handpad.display("ScopeDog eFinder", "ver " + version, "")
 time.sleep(3)
 button = ""
-handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
 
 scan = threading.Thread(target=reader)
 scan.daemon = True
 scan.start()
-
-serve = threading.Thread(target=lx200Socket)
-serve.daemon = True
-serve.start()
-
+'''
+time.sleep(2)
+scan2 = threading.Thread(target=home_refresh)
+scan2.daemon = True
+scan2.start()
+'''
 while True:  # next loop looks for button press and sets display option x,y
     if button == "20":
         exec(arr[x, y][7])
@@ -605,4 +655,17 @@ while True:  # next loop looks for button press and sets display option x,y
     elif button == "17":
         exec(arr[x, y][6])
     button = ""
-    time.sleep(0.1)
+    if x == 0 and y == 0:
+        nexus.read_altAz(arr)
+        radec = nexus.get_radec()
+        if nexus.is_aligned() == True:
+            tick = "T"
+        else:
+            tick = "N"
+        ra = coordinates.hh2dms(radec[0])
+        dec = coordinates.dd2dms(radec[1])
+        handpad.display('Nexus live     '+tick,' RA:  '+ra, 'Dec: '+dec)
+        time.sleep(0.2)
+    else:
+        time.sleep(0.1)
+
