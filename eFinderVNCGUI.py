@@ -23,30 +23,24 @@ import sys
 import glob
 from os import path
 import math
-import serial
 from PIL import Image, ImageTk, ImageDraw, ImageOps
-from datetime import datetime, timedelta
 import tkinter as tk
-from tkinter import Label, Radiobutton, StringVar, Checkbutton, Button, Frame
+from tkinter import Label, StringVar, Checkbutton, Button, Frame
 from shutil import copyfile
-import socket
 import select
 import re
-from skyfield.api import load, Star, wgs84
+from skyfield.api import load, Star #, wgs84
 from pathlib import Path
-import csv
 import fitsio
-from fitsio import FITS, FITSHDR
 import threading
 import Nexus
 import Coordinates
 import Display
 import Dummy
 import usbAssign
-#import CameraInterface
-#import ASICamera
 
-version = "21_4_VNC"
+
+version = "21_5_VNC"
 os.system("pkill -9 -f eFinder.py")  # comment out if this is the autoboot program
 
 home_path = str(Path.home())
@@ -68,7 +62,6 @@ f_g = "red"
 b_g = "black"
 solved_radec = 0, 0
 usb = False
-pix_scale = 15.4
 scopeAlt = 0
 nexus_radec =(0,0)
 nexus_altaz = (0,0)
@@ -195,8 +188,6 @@ def setupNex():
     lbl_Alt.place(x=225, y=892)
 
 def readNexus():
-    """Read the AltAz from the Nexus DSC and put the correct numbers on the GUI."""
-
     nexus.read_altAz(None)
     nexus_radec = nexus.get_radec()
     nexus_altaz = nexus.get_altAz()
@@ -599,7 +590,7 @@ def align():  # sends the Nexus the solved RA & Dec (JNow) as an align or sync p
         x=20, y=600
     )
     tk.Label(window, text="Nexus report: " + p[0:3], bg=b_g, fg=f_g).place(x=20, y=620)
-    #readNexus()
+    readNexus()
     deltaCalc()
 
 
@@ -700,7 +691,6 @@ def solve():
     image_show()
     handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
  
-
 
 def readTarget():
     global goto_radec, goto_altaz, goto_ra, goto_dec
@@ -843,7 +833,7 @@ def reader():
         time.sleep(0.1)
 
 def get_param():
-    global eye_piece, param, expRange, gainRange, frame
+    global eye_piece, param, expRange, gainRange, frame, pix_scale
     if os.path.exists(home_path + "/Solver/eFinder.config") == True:
         with open(home_path + "/Solver/eFinder.config") as h:
             for line in h:
@@ -858,7 +848,7 @@ def get_param():
                     gainRange = line[1].split(",")
                 elif line[0].startswith("frame"):
                     frame = line[1].split(",")
-                    
+            pix_scale = float(param["pixel scale"])                   
 
 def save_param():
     global param
@@ -933,8 +923,8 @@ if param["Camera Type ('QHY' or 'ASI')"]=='ASI':
     import ASICamera2
     camera = ASICamera2.ASICamera(handpad)
 elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
-    import QHYCamera
-    camera = QHYCamera.QHYCamera(handpad)
+    import QHYCamera2
+    camera = QHYCamera2.QHYCamera(handpad)
 
 if param["Drive ('scopedog' or 'servocat')"].lower()=='servocat':
     import ServoCat
@@ -1028,10 +1018,8 @@ for i in range(len(gainRange)):
         variable=gain,
     ).pack(padx=1, pady=1)
 
-
 options_frame = Frame(window, bg="black")
 options_frame.place(x=20, y=270)
-
 polaris = StringVar()
 polaris.set("0")
 tk.Checkbutton(
@@ -1478,7 +1466,6 @@ tk.Checkbutton(
     variable=abell,
 ).pack(padx=1, pady=1)
 
-
 tk.Label(window, text="RA", bg=b_g, fg=f_g).place(x=200, y=804)
 tk.Label(window, text="Dec", bg=b_g, fg=f_g).place(x=200, y=826)
 tk.Label(window, text="Az", bg=b_g, fg=f_g).place(x=200, y=870)
@@ -1529,7 +1516,7 @@ tk.Checkbutton(
         bd=0,
         width=20,
         variable=cameraFrame,
-    ).pack(padx=1, pady=0)    
+    ).pack(padx=5, pady=5)    
 get_offset()
 use_loaded_offset()
 p = nexus.get(":GW#")

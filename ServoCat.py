@@ -1,5 +1,6 @@
 import serial
 import time
+import usbAssign
 
 
 class ServoCat:
@@ -9,8 +10,9 @@ class ServoCat:
         """Initializes the ServoCat link
         Parameters: None
         """
+        usbtty = usbAssign.usbAssign()
         try:
-            self.ser = serial.Serial("/dev/ttyUSB0", baudrate=9600)
+            self.ser = serial.Serial(usbtty.get_ServoCat_usb(), baudrate=9600)
             print('ServoCat USB opened')   
         except:
             print("no USB to ServoCat found")

@@ -29,21 +29,20 @@ import fitsio
 import Nexus
 import Coordinates
 import Display
-from shutil import copyfile
 
 home_path = str(Path.home())
-version = "21_2"
+version = "21_4"
 os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
-increment = [0, 1, 5, 1, 1]
+expInc = 1 # sets how much exposure changes when using handpad adjust (seconds)
+gainInc = 5 # ditto for gain
 offset_flag = False
 align_count = 0
 offset = 640, 480
 star_name = "no star"
 solve = False
 sync_count = 0
-pix_scale = 15
 sDog = True
 
 
@@ -149,9 +148,7 @@ def solveImage():
         "none",  # Don't generate .corr files
         "--rdls",
         "none",  # Don't generate the point list
-    ]    
-    #    "--temp-axy",  # We can't specify not to create the axy list, but we can write it to /tmp
-    
+    ]     
     cmd = ["solve-field"]
     captureFile = destPath + "capture.jpg"
     options = (
@@ -251,10 +248,11 @@ def align():
         time.sleep(3)
         return
     reply = nexus.get(":CM#")
+    nexus.read_altAz(arr)
+    deltaCalc()
     print("reply: ", reply)
     p = nexus.get(":GW#")
     print("Align status reply ", p)
-    print(nexus.is_aligned())
     if nexus.is_aligned() == False: # wasnt aligned before this action
         align_count += 1    
         if p[1] != "T": # and still not aligned
@@ -275,6 +273,7 @@ def align():
         arr[0,4][1] = "Sync count " + str(sync_count)
         arr[0,4][2] = ""
         handpad.display(arr[0,4][0],arr[0,4][1],arr[0,4][2])
+    print("Nexus is aligned:",nexus.is_aligned())
     return
 
 def measure_offset():
@@ -310,9 +309,8 @@ def left_right(v):
     y = y + v
     handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
 
-def up_down_inc(i, sign):
-    global increment
-    arr[x, y][1] = int(float(arr[x, y][1])) + increment[i] * sign
+def up_down_inc(inc, sign):
+    arr[x, y][1] = int(float(arr[x, y][1])) + inc * sign
     param[arr[x, y][0]] = float(arr[x, y][1])
     handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
     update_summary()
@@ -433,12 +431,13 @@ def reset_offset():
     save_param()
 
 def get_param():
-    global param, offset_str
+    global param, offset_str, pix_scale
     if os.path.exists(home_path + "/Solver/eFinder.config") == True:
         with open(home_path + "/Solver/eFinder.config") as h:
             for line in h:
                 line = line.strip("\n").split(":")
                 param[line[0]] = str(line[1])
+        pix_scale = float(param["pixel scale"])
         pix_x, pix_y, dxstr, dystr = dxdy2pixel(
             float(param["d_x"]), float(param["d_y"])
         )
@@ -484,6 +483,7 @@ nexus = Nexus.Nexus(handpad, coordinates)
 nexus.read()
 param = dict()
 get_param()
+
 
 # array determines what is displayed, computed and what each button does for each screen.
 # [first line,second line,third line, up button action,down...,left...,right...,select button short press action, long press action]
@@ -573,8 +573,8 @@ exp = [
     "Exposure",
     param["Exposure"],
     "",
-    "up_down_inc(1,1)",
-    "up_down_inc(1,-1)",
+    "up_down_inc(expInc,1)",
+    "up_down_inc(expInc,-1)",
     "left_right(-1)",
     "left_right(1)",
     "go_solve()",
@@ -584,8 +584,8 @@ gn = [
     "Gain",
     param["Gain"],
     "",
-    "up_down_inc(2,1)",
-    "up_down_inc(2,-1)",
+    "up_down_inc(gainInc,1)",
+    "up_down_inc(gainInc,-1)",
     "left_right(-1)",
     "left_right(1)",
     "go_solve()",
@@ -620,7 +620,7 @@ bright = [
     "",
     "",
     "left_right(-1)",
-    "refresh()",
+    "",
     "go_solve()",
     "goto()",
 ]
@@ -645,8 +645,8 @@ if param["Camera Type ('QHY' or 'ASI')"]=='ASI':
     import ASICamera2
     camera = ASICamera2.ASICamera(handpad)
 elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
-    import QHYCamera
-    camera = QHYCamera.QHYCamera(handpad)
+    import QHYCamera2
+    camera = QHYCamera2.QHYCamera(handpad)
 
 if param["Drive ('scopedog' or 'servocat')"].lower()=='servocat':
     import ServoCat
