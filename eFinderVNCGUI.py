@@ -40,8 +40,8 @@ import Dummy
 import usbAssign
 
 
-version = "21_5_VNC"
-os.system("pkill -9 -f eFinder.py")  # comment out if this is the autoboot program
+version = "21_6_VNC"
+#os.system("pkill -9 -f eFinder.py")  # comment out if this is the autoboot program
 
 home_path = str(Path.home())
 
@@ -785,7 +785,7 @@ def stopSlew():
     if sDog == True:
         nexus.write(":Q#")
     else:
-        servocat.send ("g99.999 +99.999")
+        servocat.send ("g99.999 099.999")
     box_write("Slew stop", True)
 
 def getRadec():

@@ -6,22 +6,23 @@
     - [Purchase of the hardware](#purchase-of-the-hardware)
   - [eFinder hardware configurations](#efinder-hardware-configurations)
     - [Nexus DSC Pro, using SkySafari](#nexus-dsc-pro-using-skysafari)
-      - [Specific settings on the Nexus DSC Pro](#specific-settings-on-the-nexus-dsc-pro)
-      - [Create a RAM disk on the Raspberry Pi](#create-a-ram-disk-on-the-raspberry-pi)
     - [Nexus DSC Pro, without using SkySafari](#nexus-dsc-pro-without-using-skysafari)
     - [Nexus DSC, using SkySafari](#nexus-dsc-using-skysafari)
     - [Nexus DSC, without using SkySafari](#nexus-dsc-without-using-skysafari)
   - [Nexus DSC Pro](#nexus-dsc-pro)
     - [Update of the Nexus DSC Pro firmware](#update-of-the-nexus-dsc-pro-firmware)
     - [Network settings on the Nexus DSC Pro](#network-settings-on-the-nexus-dsc-pro)
+      - [Specific settings on the Nexus DSC Pro](#specific-settings-on-the-nexus-dsc-pro)
+      - [Connecting the Nexus DSC Pro to the eFinder using USB](#connecting-the-nexus-dsc-pro-to-the-efinder-using-usb)
   - [Software](#software)
     - [Raspberry Pi 4](#raspberry-pi-4)
       - [Install OS and needed dependencies](#install-os-and-needed-dependencies)
       - [Install astrometry.net](#install-astrometrynet)
       - [Install the ZWO ASI Linux SDK](#install-the-zwo-asi-linux-sdk)
       - [Start eFinder automatically after boot](#start-efinder-automatically-after-boot)
+      - [Create a RAM disk on the Raspberry Pi](#create-a-ram-disk-on-the-raspberry-pi)
       - [Install RTL8192EU driver for the TP-LINK TL-WN823N](#install-rtl8192eu-driver-for-the-tp-link-tl-wn823n)
-    - [The Raspberry Pi Pico handbox](#the-raspberry-pi-pico-handbox)
+      - [The Raspberry Pi Pico handbox](#the-raspberry-pi-pico-handbox)
     - [Changelog](#changelog)
   - [Hardware](#hardware)
     - [Adding the OLED display to the Raspberry Pi Pico](#adding-the-oled-display-to-the-raspberry-pi-pico)
@@ -69,10 +70,10 @@ Since I live in Belgium, this section is focused on European suppliers.  I purch
 | 10/10/2022 | [TP-Link 300 Mbps Wifi USB-adapter (TL-WN823N)](https://www.amazon.nl/dp/B0088TKTY2/ref=pe_28126711_487805961_TE_item)                                                                     | Amazon (.nl)      | € 9.95   | 11/10/2022 |
 | 12/06/2023 | [D-Link DWR-932](https://www.amazon.com.be/dp/B00OVJDCQ0/ref=pe_43847721_689504491_TE_item)                                                                                                | Amazon (.com.be)  | € 54.83  | 14/06/2023 |
 |Total       |                                                                                                                                                                                            |                   | € 548.15 |            |
+
 ## eFinder hardware configurations
 
 The eFinder can be added to your telescope system in a variety of ways, depending on your specific needs and preferences.
-The best option for you will depend on your specific needs and preferences. 
 
 ### Nexus DSC Pro, using SkySafari
 
@@ -81,40 +82,17 @@ A travel router is required when using SkySafari on a tablet with the Nexus DSC 
 - The ServoCAT is connected directly to the eFinder using USB.  
 - The ServoCAT is also connected to the Nexus DSC Pro using a serial cable.
 - The ASI camera and the eFinder hand box are connected directly to the eFinder using USB. 
-- The Nexus DSC Pro is connected to the eFinder using USB.  As the Nexus DSC Pro is a host, a ttl to USB adapter is needed (from [amazon.co.uk](https://www.amazon.co.uk/gp/product/B08ZS4PHNL) or [amazon.com.be](https://www.amazon.com.be/-/nl/4-pins-PL2303-kabelmodule-4-polige-PL2303HX/dp/B07LH6NJSZ)). This cable should be connected directly to the GPIO pins of the Raspberry PI, as described in the following table:
+- The Nexus DSC Pro is connected to the eFinder using USB. 
+  
+**Please use the following steps to install the eFinder**
 
-| Raspberry Pi GPIO Pin |                        | 
-|-----------------------|------------------------|
-| 6                     | USB to TTL lead, black | 
-| 8                     | USB to TTL lead, green | 
-| 10                    | USB to TTL lead, white | 
-| not used              | USB to TTL lead, red   | 
-
-
-#### Specific settings on the Nexus DSC Pro
-
-- Change the USB from ServoCat to LX200,9600,N,1
-- Change Wifi to connect to Travel Router
-  - Infrastructure, set SSID, Password, DHCP Disabled
-  - Channel: 6
-  - IP Address: 192.168.0.19
-  - Mask: 255.255.255.0
-  - Gateway: 192.168.0.1
-  - Protocol: LX200
-  - TCP port: 4060
-  - Use EPOCH: JNow
-- ADD settings for the WIFI connection (LX200?)
-
-#### Create a RAM disk on the Raspberry Pi
-
-Edit /fstab to add the line:
-
-`tmpfs /var/tmp tmpfs nodev,nosuid,size=10M 0 0`
-
-Save & exit
-
-Execute in terminal
-`sudo mount -a`
+- [Install the Raspberry Pi 4](#raspberry-pi-4)
+- [Create a RAM disk to store the index files](#create-a-ram-disk-on-the-raspberry-pi)
+- If using an external Wifi adapter, [install the needed firmware](#install-rtl8192eu-driver-for-the-tp-link-tl-wn823n)
+- [Install the latest firmware to the hand box](#the-raspberry-pi-pico-handbox)
+- [Connect the Nexus DSC Pro to the eFinder using USB](#connecting-the-nexus-dsc-pro-to-the-efinder-using-usb)
+- [Update the Nexus DSC Pro to the latest firmware](#update-of-the-nexus-dsc-pro-firmware)
+- [Set up the Nexus DSC Pro](#specific-settings-on-the-nexus-dsc-pro)
 
 ![Using a Nexus DSC Pro, ServoCAT and SkySafari](doc/NexusDSCProSkySafari.png)
 
@@ -142,12 +120,12 @@ When using a Nexus DSC, a travel router is not required when using SkySafari on 
 
 - Remove the micro SD card from the Nexus DSC Pro.
 - Insert the micro SD card into a card reader of your computer.
-- Make sure that at least version 1.1.18 of the firmware is installed on your Nexus DSC Pro.  If this is not the case, download the latest version of the firmware from the Nexus DSC pro webpage and copy the firmware image (nxpro.fw) to the micro SD card.
+- Make sure that at least version 1.1.20 of the firmware is installed on your Nexus DSC Pro.  If this is not the case, download the latest version of the firmware from the Nexus DSC pro webpage and copy the firmware image (nxpro.fw) to the micro SD card.
 - Make sure you properly eject the micro SD card from your computer.
 - Insert the micro SD card back into the slot of the Nexus DSC Pro.
 - Press and hold the OK button and turn the Nexus DSC Pro.
 - A screen is shown asking if it is OK to update the firmware.  Press OK and wait till the update is completed.
-- In the info menu, the correct version of the firmware should be shown (1.1.18).
+- In the info menu, the correct version of the firmware should be shown (1.1.20).  The needed firmware version for the Nexus DSC is 1.4.14.
 
 ### Network settings on the Nexus DSC Pro
 
@@ -159,6 +137,49 @@ Make sure the following settings are set on the Network page:
 - Password: Select a password or leave blank
 - Channel: 6 (The channel needs to be 6 to be able to connect the eFinder, a VNC client, and SkySafari on a tablet)
 - Protocol: LX200 (ServoCAT will not connect with the eFinder)
+
+#### Specific settings on the Nexus DSC Pro
+
+- Change the Serial connection to ServoCAT, 19200, 8, 1, None
+- Change the USB connection from ServoCat to LX200, 9600, 8, 1, None
+- Change Wifi to connect to Travel Router
+  - Infrastructure, set SSID, Password, DHCP Disabled
+  - Channel: 6
+  - IP Address: 192.168.0.19
+  - Mask: 255.255.255.0
+  - Gateway: 192.168.0.1
+  - Protocol: LX200
+  - TCP port: 4060
+  - Use EPOCH: JNow
+
+#### Connecting the Nexus DSC Pro to the eFinder using USB
+
+*This is only needed when using a Nexus DSC Pro and SkySafari on a tablet!*
+
+As the Nexus DSC Pro is a host, a ttl to USB adapter is needed (from [amazon.co.uk](https://www.amazon.co.uk/gp/product/B08ZS4PHNL) or [amazon.com.be](https://www.amazon.com.be/-/nl/4-pins-PL2303-kabelmodule-4-polige-PL2303HX/dp/B07LH6NJSZ)). This cable should be connected directly to the GPIO pins of the Raspberry PI, as described in the following table:
+
+| Raspberry Pi GPIO Pin |                        | 
+|-----------------------|------------------------|
+| 6                     | USB to TTL lead, black | 
+| 8                     | USB to TTL lead, green | 
+| 10                    | USB to TTL lead, white | 
+| not used              | USB to TTL lead, red   | 
+
+A useful test is to use the Nexus DSC in test mode monitoring the USB port, when switching on the eFinder. You should see the traffic as the eFinder asks for geo data etc. If not switch the green and white wires on the UART to USB cable.
+
+```
+Have you enabled ’serial’ on the Pi raspi-config set up?
+
+At this stage, set the Nexus DSC display to show Test/USB.
+Does it recognise the USB converter when you plug it in - it should say the chip type. _ which do you have?
+When you boot the Pi, as the eFinder code starts this test mode should show the bytes being passed each way.
+
+The USB converter is powered via the USB from the Nexus. Dont have the red wire connected.
+
+The Nexus USB comms should be set to LX200, 9600,8,1,N
+
+When changing wires etc, replug the USB cable into the Nexus DSC. Sometimes the Nexus DSC port handler seems to get stuck if it saw an error.
+```
 
 ## Software
 
@@ -301,6 +322,17 @@ DISPLAY=:0
 @reboot sleep 20 && (cd /home/efinder/Solver ; /usr/bin/python /home/efinder/Solver/eFinderVNCGUI_wifi.py >> /home/efinder/logs.txt 2>&1)
 ```
 
+#### Create a RAM disk on the Raspberry Pi
+
+Edit /fstab to add the line:
+
+`tmpfs /var/tmp tmpfs nodev,nosuid,size=10M 0 0`
+
+Save & exit
+
+Execute in terminal
+`sudo mount -a`
+
 #### Install RTL8192EU driver for the TP-LINK TL-WN823N
 
 - Install the needed packages
@@ -364,7 +396,7 @@ blacklist brcmutil
 sudo reboot
 ```
 
-### The Raspberry Pi Pico handbox
+#### The Raspberry Pi Pico handbox
 
 The software for the Raspberry Pi Pico handbox is written in micropython.  We first need to install micropython on the board.
 
@@ -372,7 +404,8 @@ The software for the Raspberry Pi Pico handbox is written in micropython.  We fi
 - Connect the Raspberry Pi Pico to your computer, while pushing the reset button.
 - Start *Thonny* and select to install micropython (at the bottom right).
 - The Raspberry Pi Pico will automatically reboot and install micropython.
-- After the Raspberry Pi Pico was restarted, open **main.py** in Thonny and select **Save As...**.  Select the Raspberry Pi Pico and save the file as **main.py**.  The screen of the handbox should show *ScopeDog eFinder - No eFinder yet*.
+- After the Raspberry Pi Pico was restarted, open **main_eF1_2.py** in Thonny and select **Save As...**.  Select the Raspberry Pi Pico and save the file as **main.py**.  The screen of the handbox should show *ScopeDog - with eFinder - waiting for host*.
+- Once this is loaded (as main.py) the usual Thonny stop won’t work. To stop the code (ie for an update) plug in handset with ‘OK’ button pressed.
 
 ### Changelog
 
