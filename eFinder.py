@@ -31,7 +31,7 @@ import Coordinates
 import Display
 
 home_path = str(Path.home())
-version = "21_4"
+version = "21_5"
 #os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
@@ -330,7 +330,7 @@ def update_summary():
     arr[1, 0][0] = (
         "Ex:" + str(param["Exposure"]) + "  Gn:" + str(param["Gain"])
     )
-    arr[1, 0][1] = "Test mode:" + str(param["Test mode"])
+    arr[1, 0][1] = "Test:" + str(param["Test mode"]) + " GoTo++:" + str(param["Goto++ mode"])
     save_param()
 
 def go_solve():
@@ -351,49 +351,64 @@ def go_solve():
     y = 3
     handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
 
+def gotoDistant():
+    nexus_radec = nexus.get_radec()
+    deltaRa = abs(nexus_radec[0]-goto_radec[0])*15
+    if deltaRa > 180:
+        deltaRa = abs(deltaRa - 360)
+    deltaDec = abs(nexus_radec[1]-goto_radec[1])
+    print('goto distance, RA,Dec :',deltaRa,deltaDec)
+    if deltaRa+deltaDec > 5:
+        return(True)
+    else:
+        return(False)
+
+def readTarget():
+    global goto_radec,goto_ra,goto_dec
+    goto_ra = nexus.get(":Gr#")
+    if (
+        goto_ra[0:2] == "00" and goto_ra[3:5] == "00"
+    ):  # not a valid goto target set yet.
+        print("no GoTo target")
+        handpad.display("no GoTo target","set yet","")
+        return
+    goto_dec = nexus.get(":Gd#")
+    ra = goto_ra.split(":")
+    dec = re.split(r"[:*]", goto_dec)
+    goto_radec = (float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600), math.copysign(
+            abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
+            float(dec[0]),
+    )
+    print("Target goto RA & Dec", goto_ra, goto_dec)
+
 def goto():
-    handpad.display("Attempting", "GoTo++", "")
+    handpad.display("Attempting", "GoTo", "")
+    readTarget()
+    if gotoDistant():
+        if sDog == True:     
+            nexus.write(":Sr" + goto_ra + "#")
+            nexus.write(":Sd" + goto_dec + "#")
+            reply = nexus.get(":MS#")
+        else:    
+            gotoStr = '%s%06.3f %+06.3f' %("g",goto_radec[0],goto_radec[1])
+            print("Target goto RA & Dec", gotoStr)
+            servocat.send(gotoStr)
+        handpad.display("Performing", " GoTo", "")
+        time.sleep(1)
+        gotoStopped()
+        handpad.display("Finished", " GoTo", "")
+        go_solve()
+        if int(param["Goto++ mode"]) == 0:
+            return
+    align() # close, so local sync scope to true RA & Dec
     if sDog == True:
-        goto_ra = nexus.get(":Gr#")
-        if (
-            goto_ra[0:2] == "00" and goto_ra[3:5] == "00"
-        ):  # not a valid goto target set yet.
-            print("no GoTo target")
-            handpad.display("no GoTo target","set yet","")
-            return
-        goto_dec = nexus.get(":Gd#")
-        print("Target goto RA & Dec", goto_ra, goto_dec)
-        align()
-        if solve == False:
-            handpad.display("problem", "solving", "")
-            return
         nexus.write(":Sr" + goto_ra + "#")
         nexus.write(":Sd" + goto_dec + "#")
         reply = nexus.get(":MS#")
     else:
-        goto_ra = nexus.get(":Gr#").split(":")
-        if (
-            goto_ra[0] == "00" and goto_ra[1] == "00"
-        ):  # not a valid goto target set yet.
-            print("no GoTo target")
-            handpad.display("no GoTo target","set yet","")
-            return
-        goto_dec = re.split(r"[:*]",nexus.get(":Gd#"))
-        goto_radec = (
-                float(goto_ra[0]) + float(goto_ra[1]) / 60 + float(goto_ra[2]) / 3600
-            ), math.copysign(
-                abs(abs(float(goto_dec[0])) + float(goto_dec[1]) / 60 + float(goto_dec[2]) / 3600),
-                float(goto_dec[0]),
-            )
         gotoStr = '%s%06.3f %+06.3f' %("g",goto_radec[0],goto_radec[1])
-        print("Target goto RA & Dec", gotoStr)
-        align()
-        if solve == False:
-            handpad.display("problem", "solving", "")
-            return
+        print('GoToStr: ',gotoStr)
         servocat.send(gotoStr)
-    handpad.display("Performing", " GoTo++", "")
-    time.sleep(1)
     gotoStopped()
     handpad.display("Finished", " GoTo++", "")
     go_solve()
@@ -591,6 +606,17 @@ gn = [
     "go_solve()",
     "goto()",
 ]
+gotoMode = [
+    "Goto++ mode",
+    int(param["Goto++ mode"]),
+    "",
+    "flip()",
+    "flip()",
+    "left_right(-1)",
+    "",
+    "go_solve()",
+    "goto()",
+]
 mode = [
     "Test mode",
     int(param["Test mode"]),
@@ -598,7 +624,7 @@ mode = [
     "flip()",
     "flip()",
     "left_right(-1)",
-    "",
+    "left_right(1)",
     "go_solve()",
     "goto()",
 ]
@@ -627,7 +653,7 @@ bright = [
 arr = np.array(
     [
         [home, nex, sol, delta, aligns],
-        [summary, exp, gn, mode, mode],
+        [summary, exp, gn, mode, gotoMode],
         [status, polar, reset, bright, bright],
     ]
 )

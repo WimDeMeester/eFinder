@@ -760,11 +760,38 @@ def readTarget():
             x=500, y=892
         )
 
+def gotoDistant():
+    nexus_radec = nexus.get_radec()
+    deltaRa = abs(nexus_radec[0]-goto_radec[0])*15
+    if deltaRa > 180:
+        deltaRa = abs(deltaRa - 360)
+    deltaDec = abs(nexus_radec[1]-goto_radec[1])
+    print('goto distance, RA,Dec :',deltaRa,deltaDec)
+    if deltaRa+deltaDec > 5:
+        return(True)
+    else:
+        return(False)
 
 def goto():
     global goto_ra, goto_dec
     readTarget()
-    align()  # local sync scope to true RA & Dec
+    if gotoDistant():
+        if sDog == True:
+            nexus.write(":Sr" + goto_ra + "#")
+            nexus.write(":Sd" + goto_dec + "#")
+            reply = nexus.get(":MS#")
+            box_write("ScopeDog goto", True)
+        else:
+            gotoStr = '%s%06.3f %+06.3f' %("g",goto_radec[0],goto_radec[1])
+            print('GoToStr: ',gotoStr)
+            servocat.send(gotoStr)
+            box_write("ServoCat goto", True)
+        gotoStopped()
+        box_write("Goto finished", True)
+        solve()
+        if autoGoto == "0":
+            return
+    align()  # close, so local sync scope to true RA & Dec
     if solved == False:
         box_write("solve failed", True)
         return
@@ -779,7 +806,8 @@ def goto():
         servocat.send(gotoStr)
         box_write("ServoCat goto++", True)
     gotoStopped()
-    box_write("Goto finished", True)
+    box_write("Goto++ finished", True)
+    solve()
 
 def stopSlew():
     if sDog == True:
@@ -855,6 +883,7 @@ def save_param():
     param["Exposure"] = exposure.get()
     param["Gain"] = gain.get()
     param["Test mode"] = test.get()
+    param["Goto++ mode"] = autoGoto.get()
     with open(home_path + "/Solver/eFinder.config", "w") as h:
         for key, value in param.items():
             h.write("%s:%s\n" % (key, value))
@@ -1017,6 +1046,7 @@ for i in range(len(gainRange)):
         value=float(gainRange[i]),
         variable=gain,
     ).pack(padx=1, pady=1)
+
 
 options_frame = Frame(window, bg="black")
 options_frame.place(x=20, y=270)
@@ -1221,6 +1251,20 @@ tk.Button(
     bd=0,
     command=readTarget,
 ).pack(padx=1, pady=1)
+
+autoGoto = StringVar()
+autoGoto.set(param["Goto++ mode"])
+tk.Checkbutton(
+    window,
+    text="Auto GoTo++",
+    width=13,
+    anchor="w",
+    highlightbackground="black",
+    activebackground="red",
+    bg=b_g,
+    fg=f_g,
+    variable=autoGoto,
+).place(x=175, y=950)
 
 tk.Label(window, text="RA", bg=b_g, fg=f_g).place(x=575, y=952)
 tk.Label(window, text="Dec", bg=b_g, fg=f_g).place(x=575, y=974)
