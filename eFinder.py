@@ -31,7 +31,7 @@ import Coordinates
 import Display
 
 home_path = str(Path.home())
-version = "21_5"
+version = "21_7"
 #os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
@@ -44,6 +44,7 @@ star_name = "no star"
 solve = False
 sync_count = 0
 sDog = True
+gotoFlag = False
 
 
 def xy2rd(x, y):  # returns the RA & Dec equivalent to a camera pixel x,y
@@ -352,6 +353,7 @@ def go_solve():
     handpad.display(arr[x, y][0], arr[x, y][1], arr[x, y][2])
 
 def gotoDistant():
+    nexus.read_altAz(arr)
     nexus_radec = nexus.get_radec()
     deltaRa = abs(nexus_radec[0]-goto_radec[0])*15
     if deltaRa > 180:
@@ -382,7 +384,9 @@ def readTarget():
     print("Target goto RA & Dec", goto_ra, goto_dec)
 
 def goto():
+    global gotoFlag
     handpad.display("Attempting", "GoTo", "")
+    gotoFlag = True
     readTarget()
     if gotoDistant():
         if sDog == True:     
@@ -410,27 +414,21 @@ def goto():
         print('GoToStr: ',gotoStr)
         servocat.send(gotoStr)
     gotoStopped()
+    gotoFlag = False
     handpad.display("Finished", " GoTo++", "")
     go_solve()
 
 def getRadec():
-    ra = nexus.get(":GR#").split(":")
-    dec = re.split(r"[:*]",nexus.get(":GD#"))
-    radec = (
-            float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
-        ), math.copysign(
-            abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
-            float(dec[0]),
-        )
-    return(radec)
+    nexus.read_altAz(None)
+    return(nexus.get_radec())
 
 def gotoStopped():
     radecNow = getRadec()
     while True:
-        time.sleep(0.5)
+        time.sleep(1)
         radec = getRadec()
         print(radec[0],radecNow[0],radec[1],radecNow[1])
-        if (abs(radecNow[0] - radec[0]) < 0.005) and (abs(radecNow[1] - radec[1]) < 0.01):
+        if (abs(radecNow[0] - radec[0])*15 < 0.01) and (abs(radecNow[1] - radec[1]) < 0.01):
             return
         else:
             radecNow = radec
@@ -712,7 +710,7 @@ while True:  # next loop looks for button press and sets display option x,y
     elif button == "17":
         exec(arr[x, y][6])
     button = ""
-    if x == 0 and y == 0:
+    if x == 0 and y == 0 and gotoFlag == False:
         nexus.read_altAz(arr)
         radec = nexus.get_radec()
         if nexus.is_aligned() == True:

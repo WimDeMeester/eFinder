@@ -761,6 +761,7 @@ def readTarget():
         )
 
 def gotoDistant():
+    nexus.read_altAz(None)
     nexus_radec = nexus.get_radec()
     deltaRa = abs(nexus_radec[0]-goto_radec[0])*15
     if deltaRa > 180:
@@ -817,8 +818,10 @@ def stopSlew():
     box_write("Slew stop", True)
 
 def getRadec():
+    nexus.read_altAz(None)
     ra = nexus.get(":GR#").split(":")
     dec = re.split(r"[:*]",nexus.get(":GD#"))
+    #print('getRadec, RA,Dec',ra,dec)
     radec = (
             float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
         ), math.copysign(
@@ -830,9 +833,10 @@ def getRadec():
 def gotoStopped():
     radecNow = getRadec()
     while True:
-        time.sleep(0.5)
+        time.sleep(1)
         radec = getRadec()
-        print(radec[0],radecNow[0],radec[1],radecNow[1])
+        print('deltaRA',(radec[0] - radecNow[0])*15,'degrees')
+        print('deltaDec',(radec[1] - radecNow[1]),'degrees')
         if (abs(radecNow[0] - radec[0]) < 0.005) and (abs(radecNow[1] - radec[1]) < 0.01):
             return
         else:
