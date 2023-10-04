@@ -99,13 +99,13 @@ A travel router is required when using SkySafari on a tablet with the Nexus DSC 
 - [Update the Nexus DSC Pro to the latest firmware](#update-of-the-nexus-dsc-pro-firmware)
 - [Set up the Nexus DSC Pro](#specific-settings-on-the-nexus-dsc-pro)
 
-![Using a Nexus DSC Pro, ServoCAT and SkySafari](doc/NexusDSCProSkySafari.png)
+![Using a Nexus DSC Pro, ServoCAT and SkySafari](doc/NexusDscProSkySafari.png)
 
 ###  Nexus DSC Pro, without using SkySafari
 
 If you want to connect your tablet to the eFinder (for the GUI) then for the Nexus DSC Pro, you need a travel router. For the non Pro, the Nexus can act as a router.
 
-![Using a Nexus DSC Pro, ServoCAT and no SkySafari](doc/NexusDscPro.png)
+![Using a Nexus DSC Pro, ServoCAT and no SkySafari](doc/NexusDSCPro.png)
 
 ### Nexus DSC, using SkySafari
 
@@ -117,7 +117,7 @@ When using a Nexus DSC, a travel router is not required when using SkySafari on 
 
 When using a Nexus DSC, a travel router is not required when using SkySafari on a tablet.
 
-![Using a Nexus DSC, ServoCAT and SkySafari](doc/NexusDsc.png)
+![Using a Nexus DSC, ServoCAT and SkySafari](doc/NexusDSC.png)
 
 ## Nexus DSC Pro
 
