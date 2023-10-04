@@ -1,6 +1,7 @@
 # ScopeDog eFinder
 
 - [ScopeDog eFinder](#scopedog-efinder)
+  - [Mailing list](#mailing-list)
   - [Source code](#source-code)
   - [Needed parts](#needed-parts)
     - [Purchase of the hardware](#purchase-of-the-hardware)
@@ -36,6 +37,10 @@
       - [In the VNC GUI version](#in-the-vnc-gui-version)
       - [In the handpad version](#in-the-handpad-version)
   - [Development environment](#development-environment)
+
+## Mailing list
+
+For more help, you can subscribe to the eFinder mailing list at [groups.io](https://groups.io/g/eFinder).
 
 ## Source code
 
@@ -160,26 +165,28 @@ As the Nexus DSC Pro is a host, a ttl to USB adapter is needed (from [amazon.co.
 
 | Raspberry Pi GPIO Pin |                        | 
 |-----------------------|------------------------|
-| 6                     | USB to TTL lead, black | 
-| 8                     | USB to TTL lead, green | 
-| 10                    | USB to TTL lead, white | 
-| not used              | USB to TTL lead, red   | 
+| GND                   | USB to TTL lead, black | 
+| 14                    | USB to TTL lead, green | 
+| 15                    | USB to TTL lead, white | 
+| Not used              | USB to TTL lead, red   | 
+
+The USB converter is powered via the USB from the Nexus. Do not have the red wire connected.
+
+The pinout is as in the following picture:
+
+![Raspberry Pi Pinout](doc/GPIO.png)
+
+Enable ’serial’ on the Pi raspi-config set up:
+
+```bash
+sudo raspi-config
+```
+
+Select *Interface Options*, *Serial Port*, *No Login Shell*, *Enable Serial Port hardware*
+
+The Nexus USB communication should be set to LX200, 9600,8,1,N
 
 A useful test is to use the Nexus DSC in test mode monitoring the USB port, when switching on the eFinder. You should see the traffic as the eFinder asks for geo data etc. If not switch the green and white wires on the UART to USB cable.
-
-```
-Have you enabled ’serial’ on the Pi raspi-config set up?
-
-At this stage, set the Nexus DSC display to show Test/USB.
-Does it recognise the USB converter when you plug it in - it should say the chip type. _ which do you have?
-When you boot the Pi, as the eFinder code starts this test mode should show the bytes being passed each way.
-
-The USB converter is powered via the USB from the Nexus. Dont have the red wire connected.
-
-The Nexus USB comms should be set to LX200, 9600,8,1,N
-
-When changing wires etc, replug the USB cable into the Nexus DSC. Sometimes the Nexus DSC port handler seems to get stuck if it saw an error.
-```
 
 ## Software
 
