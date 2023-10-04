@@ -1,27 +1,171 @@
 # Changelog for eFinder software
 
-## Version 17.0
-
-[Mike Rosseel]
-
-- Extracted common functions from eFinder.py and eFinderVNCGui.py
-- Extracted platesolving to it's own class and used that class in eFinder.py and eFinderVNCGui.py
-- removed all Solver dir references, files are now either in the eFinder directory, in the Stills folder or on /dev/shm/images
-- used Path everywhere for cleaner file handling
-- Introduced argparse to eFinderVNCGui.py to make CLI configuration easier, and later down the road merge it with eFinder.py
-- Added Debug classes for Camera, Handpad and Nexus, so that the program can be started without these attached.
-- added poetry dependency management
-
+## Version 22 - “The Minimalist”
 [Keith Venables]
 
-- Issue #27: eFinder did not handle negative declination values
-- Issue #31: Bug in check align status
-- Issue #32: More rugged load of parameters
+This is the the most basic version of my eFinder yet.
 
-[Wim De Meester]
+No fancy display or controls needed.
 
-- Issue #36: Aligning stars does not work...
-- Issue #30: Startup scripts for eFinder.py
+Just 1 switch and 3 buttons wired to the GPIO pins.
+
+Either a gps dongle, or a RTC module is required.
+
+The GPS will provide location and set the Pi clock.
+
+Without the GPS, the eFinder will read a default location from efinder.config and use the Pi’s
+clock. Hence in this case a RTC module is required to maintain an accurate Pi system clock.
+
+With the switch open circuit, the eFinder runs in a continuous loop, taking images every 10 seconds and passing the solved RA & Dec to a connected SkySafari App.
+
+Button (GPIO16 BCM taken to ground) will cause an immediate image and solve.
+
+Button (GPIO12 BCM taken to ground) will initiate the finder/scope offset measurement routine.
+
+Whereby the brightest star in the eFinder image is assumed to be the star that the main scope is accurately pointing to and the offset of this star position iOS used for all future solves.
+
+A long press on (GPIO20 BCM taken to ground) will safely shut down the Pi.
+
+If the switch is closed, then no looping occurs, but the button operates as above. The switch is wired between BCM pin 21 and ground.
+
+Note all pin numbers are BCM designations and not Board connector pin numbers.
+
+An optional LED and 330ohm series resistor can be wired between BCM pin 26 and ground.
+
+The LED is illuminated while code is running and goes out when the solve is being computed.
+
+SkySafari can connect via ethernet or wifi on port 4060, LX200 classic protocol. Don’t set the SkySafari readout rate to faster than 2 per second, especially if running the Pi as a wifi hotspot.
+
+## Version 21
+[Keith Venables]
+
+### VNGUI
+- Has layout and font changes to improve legibility.
+- Has 3 new buttons
+  - Target: Reads current target RA&Dec AltAz held by the Nexus (either its own or one sent by
+SkySafari)
+  - Set GoTo: Ability to upload a goto target to the Nexus DSC. The fields are filled with
+arbitrary values to demonstrate the format required.
+  - Save Image: saves last captured image to the folder /Solver/Stills as filename ddmmyy_hhmmss.jpg (datetime is UTC)
+- If a Target has been read from the Nexus DSC, then a delta x,y with respect to the target is
+calculated and displayed when solving an image.
+- Remember delta x,y is not the same as delta Az, Alt. Delta y does equal delta Alt. Delta x
+equals delta Az * cos (Alt). Thus dx,dy is what would be seen in the eyepiece.
+- Nexus column is now a live display updated every 0.5 seconds
+- GoTo++ is now only the “local sync + repeat last goto” version. Experience has shown this
+method to be excellent.
+- The GoTo++ function waits until the scope has finished moving before continuing, and
+displaying ‘goto finished’
+- STOP button replaces old ‘Move’ button, which will stop any goto in progress.
+- Simplified display autorotate checkbox and entry of manual image rotation.
+- Option to display a camera fov box, as well as eyepieces. Box size set in efinder.config. Note
+option to display is independent of the eyepiece fields of view ‘FOV indicator’
+- On starting the saved offset is now loaded.
+- The display of solved time is now in the scrolling report window at bottom right. This window
+also now includes more reports.
+- While running the GUI, the handpad display shows results, and can be used to trigger
+solve/align/goto
+- It will run without a handpad connected.
+- Tycho2 catalogue option removed from Annotate list. Far too many labels!
+- QHY cameras support is included, but not yet tested with an actual camera! Let me know if a problem.
+
+### Handpad version
+- efinder ver21 menu.pdf on the google share shows the latest handpad screen menu structure
+- Use main_eF1_2.py. Once this is loaded (as main.py) the usual Thonny stop won’t work. To
+stop the code (ie for an update) plug in handset with ‘OK’ button pressed.
+- display brightness adjusted from handpad.
+- Home display, is a live readout of Nexus derived position.
+- Home display shows a ’T’ or ’N’ in top right to indicate Nexus align status (Not or Tracking)
+- The GoTo++ function waits until the scope has finished moving before continuing, and
+displaying ‘goto finished’
+- If you use ‘Perspex Ruby’ 3mm thick acrylic for the handset OLED window the display colour
+is > 630nm and hence very good for dark adaptation. The contrast is very high and a
+brightness level of ‘1’ is probably useable by most.
+- The handpad powers up at a bright setting visible in daylight. (Value stored in bright.txt on
+Pico). It will stay at this level until the user scrolls down twice (the status display), then it
+will adjust to the previously set dim level.
+
+Many thanks to Wim and Mike who have shown the way in restructuring the code into Classes
+and other refinements. 
+
+Thanks to others who have given other valuable feedback.
+
+Special thanks to Serge at AstroDevices for strong support and producing Nexus DSC firmware
+enhancements as needed. (He is building his own eFinder too)
+
+Thanks to Bentley who has set up a forum for us to discuss and share eFinder experiences and issues. It can be found here https://groups.io/g/eFinder/messages
+
+## Version 20
+[Keith Venables]
+
+Version 20 is for use with ServoCat systems only.
+
+### Connection:
+Unplug the Nexus to ServoCat USB cable.
+Use that cable to connect eFinder to ServoCat.
+Connect the eFinder device USB cable to the Nexus USB, change Nexus USB settings to LX200, 9600 baud.
+The eFinder connects to the Nexus DSC via USB, and so the Nexus wifi is available for SkySafari etc.
+
+### Use:
+Works as previous versions except:
+The Nexus to ServoCat USB cable is normally used to command and stop GoTo’s
+Now that command comes from the eFinder.
+On handpad eFinder, commanding a GoTo causes the eFinder to automatically download the current goto target in the Nexus, and send it to the ServoCat. The Nexus Goto target can be set either from the Nexus keypad, or SkySafari etc.
+On GUI eFinder, the same target download from Nexus can be manually requested, but also a new target can be entered directly from the GUI interface.
+
+Ver 20 stores just two index files in ram. (4112 & 4113) if more are needed the increase the ramdisk size accordingly
+
+Creates ramdisk at /var/tmp
+
+```sudo nano /etc/fstab```
+
+	tmpfs /var/tmp tmpfs nodev,nosuid,size=10MB 0 0
+
+In  a terminal: 
+
+```
+sudo mount -a
+
+df -h  # to check or reboot
+```
+
+## Version 19
+[Keith Venables]
+
+This version is the start of a new variant for encoderless, push to scopes.
+
+The eFinder itself uses the same hardware as mainstream eFinder, raspberry pi, camera and hand pad. A different screen menu structure reflects the lack of Nexus DSC.
+
+It does not not connect to a Nexus DSC
+
+It requires a GPS USB dongle.
+
+After it has started it listens on port 4060 for a SkySafari connection over LAN or Wifi. It then provides latest solved RA & Dec to SkySafari up to a rate of about 4 per second.
+
+It has the ability to save a solved position, and then display the delta from that saved position to any future solves.
+
+Its early in development!
+
+In development….
+
+Save all temporary files to ramdisk.
+Add a 9 DOF sensor to allow automatic triggering of solve attempts when the scope has a) moved and b)is now stationary.
+
+
+
+## Version 18
+[Keith Venables]
+
+- Show live Nexus coordinates
+
+## Version 17
+[Keith Venables]
+
+## Version 16_3_1
+[Keith Venables]
+
+- Bug in check align status: Issue #31
+- eFinder does not handle negative declination values #27
 
 ## Version 16_3
 
@@ -65,7 +209,7 @@
 
 - Fixed a bug that prevents handpad saved exposure & gain preferences from being displayed on the GUI.
 
-- Modified how the handpad display starts when using the GUI version.
+- Modified how the handpad display starts when using the GUI version. 
 
 - Fixed a bug on the handpad version whereby a failed solve could result in the previous delta being displayed without a 'failed solve' warning
 
