@@ -100,6 +100,7 @@ def send_pin(p):
             print(str(p)[4:6])
         elif str(p)[4:6]=='20':
             print("21")
+            time.sleep(1)
         time.sleep(0.1)
     except:
         pass
@@ -139,10 +140,10 @@ def adj_brightness(p):
             return
     time.sleep(0.3)
     if p.value()==True:
-        if str(p)[4:6]== '16': #up
+        if str(p)[4:6]== '17': #up
             if contrast < 239:
                 contrast = contrast + 16
-        elif str(p)[4:6]== '18': #down
+        elif str(p)[4:6]== '19': #down
             if contrast > 16:
                 contrast = contrast - 16
         ln[2] = 'Bright adj '+str(contrast)
@@ -177,10 +178,10 @@ if __name__=='__main__':
     OLED.text(ln[1],1,12,OLED.white)
     OLED.text(ln[2],1,23,OLED.white)
     OLED.show()
-    left = Pin(19,Pin.IN,Pin.PULL_UP)
-    up = Pin(16,Pin.IN,Pin.PULL_UP)
-    right = Pin(17,Pin.IN,Pin.PULL_UP)
-    down = Pin(18,Pin.IN,Pin.PULL_UP)
+    left = Pin(16,Pin.IN,Pin.PULL_UP)
+    up = Pin(17,Pin.IN,Pin.PULL_UP)
+    right = Pin(18,Pin.IN,Pin.PULL_UP)
+    down = Pin(19,Pin.IN,Pin.PULL_UP)
     joy_button = Pin(28,Pin.IN,Pin.PULL_UP)
     select_button = Pin(20,Pin.IN,Pin.PULL_UP)
     left.irq(trigger=Pin.IRQ_FALLING, handler=send_pin)

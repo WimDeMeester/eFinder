@@ -40,7 +40,7 @@ import Dummy
 import usbAssign
 
 
-version = "21_6_VNC"
+version = "21_11_VNC"
 #os.system("pkill -9 -f eFinder.py")  # comment out if this is the autoboot program
 
 home_path = str(Path.home())
@@ -66,6 +66,7 @@ scopeAlt = 0
 nexus_radec =(0,0)
 nexus_altaz = (0,0)
 sDog = True
+gotoFlag = False
 
 
 try:
@@ -188,7 +189,9 @@ def setupNex():
     lbl_Alt.place(x=225, y=892)
 
 def readNexus():
-    nexus.read_altAz(None)
+    global nexus_radec, nexus_altaz
+    if gotoFlag == False:
+        nexus.read_altAz(None)
     nexus_radec = nexus.get_radec()
     nexus_altaz = nexus.get_altAz()
     lbl_RA.config(text=coordinates.hh2dms(nexus_radec[0]))
@@ -348,7 +351,8 @@ def solveImage():
     solved = True
     #box_write("solved", True)
     deltaCalc()
-    readTarget()
+    if drive == True:
+        readTarget()
 
 
 def applyOffset():  # creates & returns a 'Skyfield star object' at the set offset and adjusted to Jnow
@@ -590,7 +594,7 @@ def align():  # sends the Nexus the solved RA & Dec (JNow) as an align or sync p
         x=20, y=600
     )
     tk.Label(window, text="Nexus report: " + p[0:3], bg=b_g, fg=f_g).place(x=20, y=620)
-    readNexus()
+    #readNexus()
     deltaCalc()
 
 
@@ -687,6 +691,7 @@ def image():
 def solve():
     #readNexus()
     handpad.display("Solving image", "", "")
+    box_write("Solving image", True)
     solveImage()
     image_show()
     handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
@@ -761,9 +766,8 @@ def readTarget():
         )
 
 def gotoDistant():
-    global goto_radec
-    nexus.read_altAz(None)
-    nexus_radec = nexus.get_radec()
+    #nexus.read_altAz(None)
+    #nexus_radec = nexus.get_radec()
     deltaRa = abs(nexus_radec[0]-goto_radec[0])*15
     if deltaRa > 180:
         deltaRa = abs(deltaRa - 360)
@@ -775,9 +779,11 @@ def gotoDistant():
         return(False)
 
 def goto():
-    global goto_ra, goto_dec
+    global goto_ra, goto_dec, gotoFlag
+    gotoFlag = True
     readTarget()
     if gotoDistant():
+        print('Distant goto')
         if sDog == True:
             nexus.write(":Sr" + goto_ra + "#")
             nexus.write(":Sd" + goto_dec + "#")
@@ -789,14 +795,18 @@ def goto():
             servocat.send(gotoStr)
             box_write("ServoCat goto", True)
         gotoStopped()
+        print('distant goto finished')
         box_write("Goto finished", True)
         solve()
-        if autoGoto == "0":
+        if autoGoto.get() == "0":
+            gotoFlag = False
             return
     align()  # close, so local sync scope to true RA & Dec
     if solved == False:
         box_write("solve failed", True)
+        gotoFlag = False
         return
+    print('goto++')
     if sDog == True:
         nexus.write(":Sr" + goto_ra + "#")
         nexus.write(":Sd" + goto_dec + "#")
@@ -810,6 +820,7 @@ def goto():
     gotoStopped()
     box_write("Goto++ finished", True)
     solve()
+    gotoFlag = False
 
 def stopSlew():
     if sDog == True:
@@ -820,24 +831,16 @@ def stopSlew():
 
 def getRadec():
     nexus.read_altAz(None)
-    ra = nexus.get(":GR#").split(":")
-    dec = re.split(r"[:*]",nexus.get(":GD#"))
-    #print('getRadec, RA,Dec',ra,dec)
-    radec = (
-            float(ra[0]) + float(ra[1]) / 60 + float(ra[2]) / 3600
-        ), math.copysign(
-            abs(abs(float(dec[0])) + float(dec[1]) / 60 + float(dec[2]) / 3600),
-            float(dec[0]),
-        )
-    return(radec)
+    return(nexus.get_radec())
 
 def gotoStopped():
     radecNow = getRadec()
     while True:
-        time.sleep(1)
+        time.sleep(2)
         radec = getRadec()
-        print('deltaRA',(radec[0] - radecNow[0])*15,'degrees')
-        print('deltaDec',(radec[1] - radecNow[1]),'degrees')
+        print('%s %3.6f %3.6f %s' % ('RA Dec delta', (radecNow[0] - radec[0])*15,radecNow[1]-radec[1],'degrees'))
+        #print('deltaRA',(radec[0] - radecNow[0])*15,'degrees')
+        #print('deltaDec',(radec[1] - radecNow[1]),'degrees')
         if (abs(radecNow[0] - radec[0]) < 0.005) and (abs(radecNow[1] - radec[1]) < 0.01):
             return
         else:
@@ -897,17 +900,18 @@ def save_param():
 def do_button(event):
     global handpad, coordinates
     print(button)
-    if param["Buttons ('new' or 'old')"].lower()=='new':
-        up = '16'
-        down = '18'
-        left = '19'
-        right = '17'
-    else:
-        up = '17'
-        down = '19'
-        left = '16'
-        right = '18'
-
+    up = '16'
+    down = '18'
+    left = '19'
+    right = '17'
+    try:
+        if param["Buttons ('new' or 'old')"].lower()=='new':
+            up = '17'
+            down = '19'
+            left = '16'
+            right = '18'
+    except:
+        pass
     if button=='20':
         handpad.display('Capturing image','','')
         image()
@@ -918,11 +922,11 @@ def do_button(event):
         handpad.display('Performing','  align','')
         align()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'Report:'+p)
-    elif button == down: # down button
+    elif button == down and drive == True: # down button
         handpad.display('Performing','   GoTo++','')
         goto()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
-    elif button == right or button == left:
+    elif button == right or button== left:
         handpad.display('Up: Align','OK: Solve','Dn: GoTo++')
 
 def setTarget():
@@ -974,7 +978,14 @@ elif param["Camera Type ('QHY' or 'ASI')"]=='QHY':
 if param["Drive ('scopedog' or 'servocat')"].lower()=='servocat':
     import ServoCat
     servocat = ServoCat.ServoCat()
+    drive = True
     sDog = False
+elif param["Drive ('scopedog' or 'servocat')"].lower()=='scopedog':
+    print('ScopeDog mode')
+    drive = True
+else:
+    print('No drive')
+    drive = False
 
 if param["Ramdisk"].lower()=='true':
     destPath = "/var/tmp/solve/"
@@ -982,8 +993,10 @@ else:
     destPath = home_path + "/Solver/images/"
 print('Working folder: '+destPath)
 
-
-handpad.display('Up: Align','OK: Solve','Dn: GoTo++')
+if drive == True:
+    handpad.display('Up: Align','OK: Solve','Dn: GoTo++')
+else:
+    handpad.display('Up: Align','OK: Solve','')
 # main program loop, using tkinter GUI
 window = tk.Tk()
 window.title("ScopeDog eFinder v" + version)
@@ -1148,32 +1161,33 @@ tk.Button(
     fg=f_g,
     command=solve,
 ).pack(padx=1, pady=5)
-tk.Button(
-    but_frame,
-    text="GoTo++",
-    activebackground="red",
-    highlightbackground="red",
-    highlightthickness=3,
-    bd=0,
-    height=2,
-    width=10,
-    bg=b_g,
-    fg=f_g,
-    command=goto,
-).pack(padx=1, pady=5)
-tk.Button(
-    but_frame,
-    text="STOP",
-    activebackground="red",
-    highlightbackground="red",
-    highlightthickness=3,
-    bd=0,
-    height=2,
-    width=10,
-    bg=b_g,
-    fg=f_g,
-    command=stopSlew,
-).pack(padx=1, pady=5)
+if drive == True:
+    tk.Button(
+        but_frame,
+        text="GoTo",
+        activebackground="red",
+        highlightbackground="red",
+        highlightthickness=3,
+        bd=0,
+        height=2,
+        width=10,
+        bg=b_g,
+        fg=f_g,
+        command=goto,
+    ).pack(padx=1, pady=5)
+    tk.Button(
+        but_frame,
+        text="STOP",
+        activebackground="red",
+        highlightbackground="red",
+        highlightthickness=3,
+        bd=0,
+        height=2,
+        width=10,
+        bg=b_g,
+        fg=f_g,
+        command=stopSlew,
+    ).pack(padx=1, pady=5)
 
 off_frame = Frame(window, bg="black")
 off_frame.place(x=10, y=420)
@@ -1254,70 +1268,75 @@ tk.Label(
 
 tk.Label(window, text="delta x,y", bg=b_g, fg=f_g).place(x=345, y=770)
 tk.Label(window, text="Solution", bg=b_g, fg=f_g).place(x=435, y=770)
-tk.Label(window, text="delta x,y", bg=b_g, fg=f_g).place(x=535, y=770)
-target_frame = Frame(window, bg="black")
-target_frame.place(x=620, y=766)
-tk.Button(
-    target_frame,
-    text="Target",
-    bg=b_g,
-    fg=f_g,
-    activebackground="red",
-    highlightbackground="red",
-    bd=0,
-    command=readTarget,
-).pack(padx=1, pady=1)
 
 autoGoto = StringVar()
 autoGoto.set(param["Goto++ mode"])
-tk.Checkbutton(
-    window,
-    text="Auto GoTo++",
-    width=13,
-    anchor="w",
-    highlightbackground="black",
-    activebackground="red",
-    bg=b_g,
-    fg=f_g,
-    variable=autoGoto,
-).place(x=175, y=950)
 
-tk.Label(window, text="RA", bg=b_g, fg=f_g).place(x=575, y=952)
-tk.Label(window, text="Dec", bg=b_g, fg=f_g).place(x=575, y=974)
-goto_frame = Frame(window, bg="black")
-goto_frame.place(x=605,y=918)
-tk.Button(
-    goto_frame,
-    text="Set GoTo",
-    bg=b_g,
-    fg=f_g,
-    activebackground="red",
-    highlightbackground="red",
-    bd=0,
-    command=setTarget,
-).pack(padx=1, pady=1)
-gotoRa = StringVar()
-gotoRa.set("00:44:01")
-tk.Entry(
-    goto_frame,
-    textvariable=gotoRa,
-    bg="red",
-    fg=b_g,
-    highlightbackground="red",
-    bd=0,
-    width=10,
-).pack(padx=10, pady=1)
-gotoDec = StringVar()
-gotoDec.set("+41:23:49")
-tk.Entry(
-    goto_frame,
-    textvariable=gotoDec,
-    bg="red",
-    fg=b_g,
-    highlightbackground="red",
-    bd=0,
-    width=10,
-).pack(padx=10, pady=1)
+if drive == True:
+    tk.Label(window, text="delta x,y", bg=b_g, fg=f_g).place(x=535, y=770)
+    target_frame = Frame(window, bg="black")
+    target_frame.place(x=620, y=766)
+    tk.Button(
+        target_frame,
+        text="Target",
+        bg=b_g,
+        fg=f_g,
+        activebackground="red",
+        highlightbackground="red",
+        bd=0,
+        command=readTarget,
+    ).pack(padx=1, pady=1)
+
+
+    tk.Checkbutton(
+        window,
+        text="Auto GoTo++",
+        width=13,
+        anchor="w",
+        highlightbackground="black",
+        activebackground="red",
+        bg=b_g,
+        fg=f_g,
+        variable=autoGoto,
+    ).place(x=175, y=950)
+
+    tk.Label(window, text="RA", bg=b_g, fg=f_g).place(x=575, y=952)
+    tk.Label(window, text="Dec", bg=b_g, fg=f_g).place(x=575, y=974)
+
+    goto_frame = Frame(window, bg="black")
+    goto_frame.place(x=605,y=918)
+    tk.Button(
+        goto_frame,
+        text="Set GoTo",
+        bg=b_g,
+        fg=f_g,
+        activebackground="red",
+        highlightbackground="red",
+        bd=0,
+        command=setTarget,
+    ).pack(padx=1, pady=1)
+    gotoRa = StringVar()
+    gotoRa.set("00:46:15")
+    tk.Entry(
+        goto_frame,
+        textvariable=gotoRa,
+        bg="red",
+        fg=b_g,
+        highlightbackground="red",
+        bd=0,
+        width=10,
+    ).pack(padx=10, pady=1)
+    gotoDec = StringVar()
+    gotoDec.set("+41:11:05")
+    tk.Entry(
+        goto_frame,
+        textvariable=gotoDec,
+        bg="red",
+        fg=b_g,
+        highlightbackground="red",
+        bd=0,
+        width=10,
+    ).pack(padx=10, pady=1)
 
 dis_frame = Frame(window, bg="black")
 dis_frame.place(x=790, y=765)

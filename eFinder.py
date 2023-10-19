@@ -31,7 +31,7 @@ import Coordinates
 import Display
 
 home_path = str(Path.home())
-version = "21_8"
+version = "21_11"
 #os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
@@ -331,7 +331,10 @@ def update_summary():
     arr[1, 0][0] = (
         "Ex:" + str(param["Exposure"]) + "  Gn:" + str(param["Gain"])
     )
-    arr[1, 0][1] = "Test:" + str(param["Test mode"]) + " GoTo++:" + str(param["Goto++ mode"])
+    if drive == True:
+        arr[1, 0][1] = "Test:" + str(param["Test mode"]) + " GoTo++:" + str(param["Goto++ mode"])
+    else:
+        arr[1, 0][1] = "Test:" + str(param["Test mode"])
     save_param()
 
 def go_solve():
@@ -385,6 +388,9 @@ def readTarget():
 
 def goto():
     global gotoFlag
+    if drive == False:
+        handpad.display("No Drive", "Connected", "")
+        return
     handpad.display("Starting", "GoTo", "")
     gotoFlag = True
     readTarget()
@@ -426,9 +432,9 @@ def getRadec():
 def gotoStopped():
     radecNow = getRadec()
     while True:
-        time.sleep(1)
+        time.sleep(2)
         radec = getRadec()
-        print(radec[0],radecNow[0],radec[1],radecNow[1])
+        print('%s %3.6f %3.6f %s' % ('RA Dec delta', (radecNow[0] - radec[0])*15,radecNow[1]-radec[1],'degrees'))
         if (abs(radecNow[0] - radec[0])*15 < 0.01) and (abs(radecNow[1] - radec[1]) < 0.01):
             return
         else:
@@ -465,12 +471,6 @@ def save_param():
             #print("%s:%s\n" % (key, value))
             h.write("%s:%s\n" % (key, value))
 
-def reader():
-    global button
-    while True:
-        if handpad.get_box() in select.select([handpad.get_box()], [], [], 0)[0]:
-            button = handpad.get_box().readline().decode("ascii").strip("\r\n")
-        time.sleep(0.1)
 
 def home_refresh():
     global x,y
@@ -656,7 +656,7 @@ arr = np.array(
         [status, polar, reset, bright, bright],
     ]
 )
-update_summary()
+
 deg_x, deg_y, dxstr, dystr = dxdy2pixel(float(param["d_x"]), float(param["d_y"]))
 offset_str = dxstr + "," + dystr
 new_arr = nexus.read_altAz(arr)
@@ -678,50 +678,61 @@ if param["Drive ('scopedog' or 'servocat')"].lower()=='servocat':
     servocat = ServoCat.ServoCat()
     sDog = False
     print('ServoCat mode')
+    drive = True
     arr[2,0][1] = "ServoCat mode"
-else:
+elif param["Drive ('scopedog' or 'servocat')"].lower()=='scopedog':
     print('ScopeDog mode')
+    drive = True
     arr[2,0][1] = "ScopeDog mode"
-
+else:
+    print('No drive')
+    arr[2,0][1] = "No drive"
+    drive = False
 if param["Ramdisk"].lower()=='true':
     destPath = "/var/tmp/"
 else:
     destPath = home_path + "/Solver/images/"
 print('Working folder: '+destPath)
-
-handpad.display("ScopeDog eFinder", "ver " + version, "Drive: "+param["Drive ('scopedog' or 'servocat')"])
+update_summary()
+if drive == True:
+    handpad.display("ScopeDog eFinder", "ver " + version, "Drive: "+param["Drive ('scopedog' or 'servocat')"])
+else:
+    handpad.display("ScopeDog eFinder", "ver " + version, "No Scope Drive")
 time.sleep(3)
 button = ""
 
-scan = threading.Thread(target=reader)
-scan.daemon = True
-scan.start()
+up = '16'
+down = '18'
+left = '19'
+right = '17'
 
-if param["Buttons ('new' or 'old')"].lower()=='new':
-    up = '16'
-    down = '18'
-    left = '19'
-    right = '17'
-else:
-    up = '17'
-    down = '19'
-    left = '16'
-    right = '18'
+try:
+    if param["Buttons ('new' or 'old')"].lower()=='old':
+        up = '17'
+        down = '19'
+        left = '16'
+        right = '18'
 
-while True:  # next loop looks for button press and sets display option x,y
-    if button == "20":
-        exec(arr[x, y][7])
-    elif button == "21":
-        exec(arr[x, y][8])
-    elif button == down:
-        exec(arr[x, y][4])
-    elif button == up:
-        exec(arr[x, y][3])
-    elif button == left:
-        exec(arr[x, y][5])
-    elif button == right:
-        exec(arr[x, y][6])
-    button = ""
+except:
+    pass
+
+while True:
+    if handpad.get_box() in select.select([handpad.get_box()], [], [], 0)[0]:
+        button = handpad.get_box().readline().decode("ascii").strip("\r\n")
+        print(button)
+        if button == "20":
+            exec(arr[x, y][7])
+        elif button == "21":
+            exec(arr[x, y][8])
+        elif button == down:
+            exec(arr[x, y][4])
+        elif button == up:
+            exec(arr[x, y][3])
+        elif button == left:
+            exec(arr[x, y][5])
+        elif button == right:
+            exec(arr[x, y][6])
+        button = ""
     if x == 0 and y == 0 and gotoFlag == False:
         nexus.read_altAz(arr)
         radec = nexus.get_radec()
@@ -733,6 +744,8 @@ while True:  # next loop looks for button press and sets display option x,y
         dec = coordinates.dd2dms(radec[1])
         handpad.display('Nexus live     '+tick,' RA:  '+ra, 'Dec: '+dec)
         time.sleep(0.2)
-    else:
-        time.sleep(0.1)
+    time.sleep(0.1)
+
+
+
 
