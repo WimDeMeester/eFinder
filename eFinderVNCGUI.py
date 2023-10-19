@@ -761,6 +761,7 @@ def readTarget():
         )
 
 def gotoDistant():
+    global goto_radec
     nexus.read_altAz(None)
     nexus_radec = nexus.get_radec()
     deltaRa = abs(nexus_radec[0]-goto_radec[0])*15
@@ -896,21 +897,32 @@ def save_param():
 def do_button(event):
     global handpad, coordinates
     print(button)
+    if param["Buttons ('new' or 'old')"].lower()=='new':
+        up = '16'
+        down = '18'
+        left = '19'
+        right = '17'
+    else:
+        up = '17'
+        down = '19'
+        left = '16'
+        right = '18'
+
     if button=='20':
         handpad.display('Capturing image','','')
         image()
         handpad.display('Solving image','','')
         solve()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
-    elif button =='16': # up button
+    elif button == up: # up button
         handpad.display('Performing','  align','')
         align()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'Report:'+p)
-    elif button == '18': # down button
+    elif button == down: # down button
         handpad.display('Performing','   GoTo++','')
         goto()
         handpad.display('RA:  '+coordinates.hh2dms(solved_radec[0]),'Dec:'+coordinates.dd2dms(solved_radec[1]),'d:'+str(deltaAz)[:6]+','+str(deltaAlt)[:6])
-    elif button == '17' or button== '19':
+    elif button == right or button == left:
         handpad.display('Up: Align','OK: Solve','Dn: GoTo++')
 
 def setTarget():

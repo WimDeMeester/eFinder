@@ -12,7 +12,7 @@ SCK = 10
 CS = 9
 ln = ["ScopeDog","with eFinder","waiting for host"]
 
-version = "main_eF1_2"
+version = "main_eF1_3"
 
 class OLED_2inch23(framebuf.FrameBuffer):
     def __init__(self):

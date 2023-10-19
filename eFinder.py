@@ -31,7 +31,7 @@ import Coordinates
 import Display
 
 home_path = str(Path.home())
-version = "21_7"
+version = "21_8"
 #os.system('pkill -9 -f eFinder.py') # stops the autostart eFinder program running
 x = y = 0  # x, y  define what page the display is showing
 deltaAz = deltaAlt = 0
@@ -385,7 +385,7 @@ def readTarget():
 
 def goto():
     global gotoFlag
-    handpad.display("Attempting", "GoTo", "")
+    handpad.display("Starting", "GoTo", "")
     gotoFlag = True
     readTarget()
     if gotoDistant():
@@ -404,6 +404,7 @@ def goto():
         go_solve()
         if int(param["Goto++ mode"]) == 0:
             return
+    handpad.display("Attempting", " GoTo++", "")
     align() # close, so local sync scope to true RA & Dec
     if sDog == True:
         nexus.write(":Sr" + goto_ra + "#")
@@ -696,18 +697,29 @@ scan = threading.Thread(target=reader)
 scan.daemon = True
 scan.start()
 
+if param["Buttons ('new' or 'old')"].lower()=='new':
+    up = '16'
+    down = '18'
+    left = '19'
+    right = '17'
+else:
+    up = '17'
+    down = '19'
+    left = '16'
+    right = '18'
+
 while True:  # next loop looks for button press and sets display option x,y
     if button == "20":
         exec(arr[x, y][7])
     elif button == "21":
         exec(arr[x, y][8])
-    elif button == "18":
+    elif button == down:
         exec(arr[x, y][4])
-    elif button == "16":
+    elif button == up:
         exec(arr[x, y][3])
-    elif button == "19":
+    elif button == left:
         exec(arr[x, y][5])
-    elif button == "17":
+    elif button == right:
         exec(arr[x, y][6])
     button = ""
     if x == 0 and y == 0 and gotoFlag == False:
